@@ -1,22 +1,10 @@
-from lxml import etree
+from porteira.porteira import Schema
 
 
-xmlns = "http://www.openarchives.org/OAI/2.0/"
-xsi = "http://www.w3.org/2001/XMLSchema-instance"
-schemaLocation = "http://www.openarchives.org/OAI/2.0/"
-schemaLocation += "http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
-attrib = {"{%s}schemaLocation" % xsi: schemaLocation}
-
-def make_xml(data):
-    root = etree.Element("OAI-PMH", nsmap={None:xmlns, 'xsi':xsi}, attrib=attrib)
-    for k, v in data.items():
-        sub = etree.SubElement(root, k)
-        if not isinstance(v, dict):
-            sub.text = str(v)
-        else:
-            for kk, vv in v.items():
-                etree.SubElement(sub, kk).text = str(vv)
-    return root
+def parse_to_xml(data):
+    sch = Schema()
+    xml = sch.serialize(data)
+    return xml
 
 
 def oai_factory(info):
@@ -27,6 +15,6 @@ def oai_factory(info):
             response = request.response
             response.charset = 'utf-8'
             response.content_type = 'application/xml'
-        return etree.tostring(make_xml(value), pretty_print=True)
+        return parse_to_xml(value)
     return _render
 
