@@ -11,7 +11,8 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'pymongo',
-    'porteira',
+    'requests',
+    'mock'
     ]
 
 setup(name='booksoai',
