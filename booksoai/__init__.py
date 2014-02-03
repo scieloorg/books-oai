@@ -25,8 +25,8 @@ def main(global_config, **settings):
     # Starts sync process on new requests
     def start_sync(event):
         settings = event.request.registry.settings
-        db = get_db_connection(settings)
         if settings.get('auto_sync', False):
+            db = settings['db_conn']
             interval = settings.get('auto_sync_interval', 60*60*12)
             try:
                 update = db.updates.find_one()

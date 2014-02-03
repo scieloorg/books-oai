@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, date
+from datetime import datetime
 
 from pyramid import testing
 from pyramid.httpexceptions import HTTPNotFound
@@ -15,6 +15,7 @@ from mock import patch, call
 settings = {}
 settings['mongo_uri'] = 'mongodb://localhost:27017/scielobooks-test'
 settings['scielo_uri'] = 'http://books.scielo.org/api/v1/'
+settings['db_conn'] = get_db_connection(settings)
 
 
 def tearDownModule():

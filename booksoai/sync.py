@@ -46,7 +46,7 @@ def adapt_data(data):
 
 
 def mark_as_deleted(update, settings):
-    db = get_db_connection(settings)
+    db = settings['db_conn']
     _id = update['id']
     db.books.update({
         'identifier': _id
@@ -60,7 +60,7 @@ def mark_as_deleted(update, settings):
 
 
 def persists_data(data, settings):
-    db = get_db_connection(settings)
+    db = settings['db_conn']
     db.books.update({
         'identifier': data['identifier']
     }, {
@@ -76,7 +76,7 @@ def get_data_from_api(uri, revision=None):
 
 
 def get_updates(settings):
-    db = get_db_connection(settings)
+    db = settings['db_conn']
     update = db.updates.find_one()
     last_change = update['last_seq'] if update else 0
 

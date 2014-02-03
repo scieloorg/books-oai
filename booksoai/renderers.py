@@ -1,11 +1,7 @@
-from porteira.porteira import Schema
 
 
 def parse_to_xml(data):
-    sch = Schema()
-    xml = sch.serialize(data)
-    return xml
-
+    pass
 
 def oai_factory(info):
     
