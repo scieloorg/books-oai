@@ -44,36 +44,6 @@ class ViewTests(unittest.TestCase):
         self.assertEqual(response['OAI-PMH']['Identify']['repositoryName'], 'SciELO Books')
 
 
-class RenderersTests(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-
-    def test_dummy_identify_verb(self):
-        from .renderers import parse_to_xml
-
-        dummy_data = {
-            'OAI-PMH': {
-                'responseDate': datetime(2014, 01, 15),
-                'Identify': {
-                    'repositoryName': 'SciELO Books',
-                    'baseURL': 'http://books.scielo.org/oai/',
-                    'protocolVersion': 2.0,
-                    'adminEmail': 'books@scielo.org',
-                    'earliestDatestamp': datetime(1909, 04, 01),
-                    'deletedRecord': False,
-                    'granularity': 'YYYY-MM-DD'
-                }
-            }
-        }
-        
-        xml = parse_to_xml(dummy_data)
-        sch = Schema()
-        self.assertEqual(xml, sch.serialize(dummy_data))
-
-
 class SyncTests(unittest.TestCase):
 
     def setUp(self):
@@ -87,7 +57,7 @@ class SyncTests(unittest.TestCase):
     def test_get_updates_no_updates_return_empty_list(self, mock_data):
         mock_data.return_value = {'results': [], 'last_seq':0}
  
-        resp = get_updates(settings)
+        resp = get_updates(settings['scielo_uri'], settings['db_conn'])
         update = self.db.updates.find_one()
         
         self.assertEquals(resp, [])
@@ -97,7 +67,7 @@ class SyncTests(unittest.TestCase):
     def test_get_updates_with_updates_return_updates_list(self, mock_data):
         mock_data.return_value = {'results': [{'seq': 2}], 'last_seq': 2}
  
-        resp = get_updates(settings)
+        resp = get_updates(settings['scielo_uri'], settings['db_conn'])
         update = self.db.updates.find_one()
 
         self.assertEquals(resp, [{'seq': 2}])
@@ -109,7 +79,7 @@ class SyncTests(unittest.TestCase):
         self.db.updates.insert({'last_seq': 2}, w=1)
         mock_data.return_value = {'results': [], 'last_seq': 3}
 
-        get_updates(settings)
+        get_updates(settings['scielo_uri'], settings['db_conn'])
         
         api_data_call = call('%s_changes?since=%s' % (settings['scielo_uri'], 2))
         self.assertEquals(mock_data.call_args_list, [api_data_call])
@@ -138,7 +108,7 @@ class SyncTests(unittest.TestCase):
 
         uri = '%s%s/' % (settings['scielo_uri'], 1)
         api_data_call = call(uri, {'rev':'2'})
-        persists_call = call({'datestamp': test_datetime, 'identifier':10, 'publisher': 'teste'}, settings)
+        persists_call = call({'datestamp': test_datetime, 'identifier':10, 'publisher': 'teste'}, settings['db_conn'])
 
         self.assertEquals(mock_api_data.call_args_list, [api_data_call])
         self.assertEquals(mock_persists.call_args_list, [persists_call])
@@ -150,7 +120,7 @@ class SyncTests(unittest.TestCase):
 
         update_from_api(settings)
 
-        mock_call = call({'a':1, 'b':2, 'deleted':True}, settings)
+        mock_call = call({'a':1, 'b':2, 'deleted':True}, settings['db_conn'])
         self.assertEquals(mock_mark_as_deleted.call_args_list, [mock_call])
 
     @patch('booksoai.sync.datetime')
@@ -181,11 +151,11 @@ class SyncTests(unittest.TestCase):
         mock_datetime.now.return_value = test_datetime
         book = {'identifier':1}
         
-        db = get_db_connection(settings)
+        db = settings['db_conn']
         db.books.insert(book)
 
         update = {'id':1, 'deleted': True}
-        mark_as_deleted(update, settings)
+        mark_as_deleted(update, db)
 
         book = db.books.find_one({'identifier': 1})
         self.assertEquals(book['deleted'], True)
