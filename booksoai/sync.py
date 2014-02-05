@@ -45,8 +45,7 @@ def adapt_data(data):
     return adapted
 
 
-def mark_as_deleted(update, settings):
-    db = settings['db_conn']
+def mark_as_deleted(update, db):
     _id = update['id']
     db.books.update({
         'identifier': _id
@@ -59,8 +58,7 @@ def mark_as_deleted(update, settings):
     logger.info('Mark book as deleted. ID: %s' % update['id'])
 
 
-def persists_data(data, settings):
-    db = settings['db_conn']
+def persists_data(data, db):
     db.books.update({
         'identifier': data['identifier']
     }, {
@@ -75,12 +73,10 @@ def get_data_from_api(uri, revision=None):
     return data
 
 
-def get_updates(settings):
-    db = settings['db_conn']
+def get_updates(api_uri, db):
     update = db.updates.find_one()
     last_change = update['last_seq'] if update else 0
 
-    api_uri = settings.get('scielo_uri')
     changes_uri = '%s_changes?since=%s' % (api_uri, last_change)
     data = get_data_from_api(changes_uri)
 
@@ -97,18 +93,19 @@ def get_updates(settings):
 
 def update_from_api(settings):
     try:
-        updates = get_updates(settings)
+        db = get_db_connection(settings)
         api_uri = settings.get('scielo_uri')
+        updates = get_updates(api_uri, db)
         
         for update in updates:
             if update.get('deleted'):
-                mark_as_deleted(update, settings)
+                mark_as_deleted(update, db)
             else:
                 revision = update['changes'][-1]
                 uri = '%s%s/' % (api_uri, update['id'])
                 data = get_data_from_api(uri, revision)
                 adapted = adapt_data(data)
-                persists_data(adapted, settings)
+                persists_data(adapted, db)
 
     except (HTTPError, ConnectionError) as e:
         logger.error('%s: %s' % (e.__class__.__name__, e.message))
