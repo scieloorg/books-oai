@@ -33,8 +33,8 @@ setup(name='booksoai',
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
-      tests_require=requires,
-      test_suite="booksoai",
+      tests_require = ['nose'],
+      test_suite="nose.collector",
       entry_points="""\
       [paste.app_factory]
       main = booksoai:main

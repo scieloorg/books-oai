@@ -1,7 +1,7 @@
 
 
 def parse_to_xml(data):
-    pass
+    return str(data)
 
 def oai_factory(info):
     
