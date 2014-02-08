@@ -57,6 +57,7 @@ class ListMetadataFormatsVerb(object):
             pipeline.RequestPipe(),
             pipeline.ListMetadataFormatsPipe(),
             pipeline.MetadataFormatPipe(),
+            pipeline.MetadaFormatPipe(),
             pipeline.TearDownPipe()
         )
 
