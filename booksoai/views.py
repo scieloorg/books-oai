@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from oaipmh import IdentifyVerb, ListMetadataFormatsVerb
+import oaipmh
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPNotFound
 
@@ -9,9 +9,15 @@ from pyramid.httpexceptions import HTTPNotFound
 def oai_pmh(request):
     verb = request.params.get('verb')
     if verb == 'Identify':
-        verb = IdentifyVerb()
+        verb = oaipmh.IdentifyVerb()
     elif verb == 'ListMetadataFormats':
-    	verb = ListMetadataFormatsVerb()
+    	verb = oaipmh.ListMetadataFormatsVerb()
+    elif verb == 'ListIdentifiers':
+    	books = request.db.books.find()
+    	verb = oaipmh.ListIdentifiersVerb(books)
+    elif verb == 'ListSets':
+        books = request.db.books.find()
+        verb = oaipmh.ListSetsVerb(books)
     else:
         raise HTTPNotFound()
     return verb

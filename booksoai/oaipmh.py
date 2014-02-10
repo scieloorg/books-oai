@@ -35,6 +35,7 @@ class IdentifyVerb(object):
         xml = results.next()
         return etree.tostring(xml)
 
+
 class ListMetadataFormatsVerb(object):
 
     def __init__(self):
@@ -63,3 +64,49 @@ class ListMetadataFormatsVerb(object):
         results = ppl.run([self.data])
         xml = results.next()
         return etree.tostring(xml)
+
+
+class ListIdentifiersVerb(object):
+
+    def __init__(self, books):
+        self.data = {
+            'verb': 'ListIdentifiers',
+            'baseURL': 'http://books.scielo.org/oai/',
+            'books': books
+        }
+
+    def __str__(self):
+        ppl = plumber.Pipeline(
+            pipeline.SetupPipe(),
+            pipeline.ResponseDatePipe(),
+            pipeline.RequestPipe(),
+            pipeline.ListIdentifiersPipe(),
+            pipeline.TearDownPipe()
+        )
+
+        results = ppl.run([self.data])
+        xml = ''.join([etree.tostring(record) for record in results])
+        return xml
+
+
+class ListSetsVerb(object):
+
+    def __init__(self, books):
+        self.data = {
+            'verb': 'ListSets',
+            'baseURL': 'http://books.scielo.org/oai/',
+            'books': books
+        }
+
+    def __str__(self):
+        ppl = plumber.Pipeline(
+            pipeline.SetupPipe(),
+            pipeline.ResponseDatePipe(),
+            pipeline.RequestPipe(),
+            pipeline.ListSetsPipe(),
+            pipeline.TearDownPipe()
+        )
+
+        results = ppl.run([self.data])
+        xml = ''.join([etree.tostring(record) for record in results])
+        return xml
