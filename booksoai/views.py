@@ -5,20 +5,22 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPNotFound
 
 
+VERBS = {
+    'Identify': (oaipmh.IdentifyVerb, False),
+    'ListMetadataFormats': (oaipmh.ListMetadataFormatsVerb, False),
+    'ListIdentifiers': (oaipmh.ListIdentifiersVerb, True),
+    'ListSets': (oaipmh.ListSetsVerb, True),
+}
+
 @view_config(route_name='oai_pmh', renderer='oai')
 def oai_pmh(request):
-    verb = request.params.get('verb')
-    if verb == 'Identify':
-        verb = oaipmh.IdentifyVerb()
-    elif verb == 'ListMetadataFormats':
-    	verb = oaipmh.ListMetadataFormatsVerb()
-    elif verb == 'ListIdentifiers':
-    	books = request.db.books.find()
-    	verb = oaipmh.ListIdentifiersVerb(books)
-    elif verb == 'ListSets':
-        books = request.db.books.find()
-        verb = oaipmh.ListSetsVerb(books)
-    else:
+    request_verb = request.params.get('verb')
+    try:
+        OaiVerb, need_books = VERBS[request_verb]
+    except KeyError:
         raise HTTPNotFound()
-    return verb
+
+    params = {'books': request.db.books.find()} if need_books else {}
+
+    return OaiVerb(**params)
 

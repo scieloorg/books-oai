@@ -43,13 +43,13 @@ class TestResponseDatePipe(unittest.TestCase):
 class TestRequestPipe(unittest.TestCase):
 
     def test_request_add_verb_and_base_url(self):
-        data = {'verb': 'Identifyer', 'baseURL': 'http://books.scielo.org/oai/'}
+        data = {'verb': 'Identifier', 'baseURL': 'http://books.scielo.org/oai/'}
         xml = etree.Element('root')
         
         pipe = pipeline.RequestPipe()
         resp_xml, resp_data = pipe.transform((xml, data))
 
-        xml_str = '<root><request verb="Identifyer">http://books.scielo.org/oai/</request></root>'
+        xml_str = '<root><request verb="Identifier">http://books.scielo.org/oai/</request></root>'
 
         self.assertEqual(etree.tostring(resp_xml), xml_str)
 
@@ -149,3 +149,118 @@ class TestMetadataFormatPipe(unittest.TestCase):
         xml_str += '</root>'
 
         self.assertEqual(etree.tostring(resp_xml), xml_str)
+
+
+class TestHeaderPipe(unittest.TestCase):
+
+    def test_header_pipe_add_header_with_three_subelements(self):
+        data = {
+            'identifier': 'xpto',
+            'datestamp': datetime(2014, 02, 12, 10, 55, 00),
+            'publisher': 'Teste OAI-PMH'
+        }
+
+        pipe = pipeline.HeaderPipe()
+        xml = pipe.transform(data)
+
+        xml_str = '<header>'
+        xml_str += '<identifier>xpto</identifier>'
+        xml_str += '<datestamp>2014-02-12</datestamp>'
+        xml_str += '<setSpec>teste-oai-pmh</setSpec>'
+        xml_str += '</header>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+
+class TestListIdentifiersPipe(unittest.TestCase):
+
+    def test_list_identifiers_add_one_header_for_each_identifier(self):
+        data = {
+            'verb': 'ListIdentifiers',
+            'baseURL': 'http://books.scielo.org/oai/',
+            'books': [
+                {
+                    'identifier': 'xpto',
+                    'datestamp': datetime(2014, 02, 12, 10, 55, 00),
+                    'publisher': 'Teste OAI-PMH'
+                }, {
+                    'identifier': 'xvzp',
+                    'datestamp': datetime(2014, 01, 27, 10, 55, 00),
+                    'publisher': 'OAI-PMH SciELO'
+                }
+            ]
+        }
+        root = etree.Element('root')
+
+        pipe = pipeline.ListIdentifiersPipe()
+        xml, data = pipe.transform((root, data))
+
+        xml_str = '<root>'
+        xml_str += '<ListIdentifiers>'
+        xml_str += '<header>'
+        xml_str += '<identifier>xpto</identifier>'
+        xml_str += '<datestamp>2014-02-12</datestamp>'
+        xml_str += '<setSpec>teste-oai-pmh</setSpec>'
+        xml_str += '</header>'
+        xml_str += '<header>'
+        xml_str += '<identifier>xvzp</identifier>'
+        xml_str += '<datestamp>2014-01-27</datestamp>'
+        xml_str += '<setSpec>oai-pmh-scielo</setSpec>'
+        xml_str += '</header>'
+        xml_str += '</ListIdentifiers>'
+        xml_str += '</root>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+
+class TestSetPipe(unittest.TestCase):
+
+    def test_set_pipe_add_set_with_two_subelements(self):
+        data = {
+            'publisher': 'Editora UNESP',
+        }
+
+        pipe = pipeline.SetPipe()
+        xml = pipe.transform(data)
+
+        xml_str = '<set>'
+        xml_str += '<setSpec>editora-unesp</setSpec>'
+        xml_str += '<setName>Editora UNESP</setName>'
+        xml_str += '</set>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+
+class TestListSetsPipe(unittest.TestCase):
+
+    def test_list_sets_add_one_set_for_each_publisher(self):
+        data = {
+            'verb': 'ListIdentifiers',
+            'baseURL': 'http://books.scielo.org/oai/',
+            'books': [
+                {
+                    'publisher': 'Teste OAI-PMH'
+                }, {
+                    'publisher': 'OAI-PMH SciELO'
+                }
+            ]
+        }
+        root = etree.Element('root')
+
+        pipe = pipeline.ListSetsPipe()
+        xml, data = pipe.transform((root, data))
+
+        xml_str = '<root>'
+        xml_str += '<ListSets>'
+        xml_str += '<set>'
+        xml_str += '<setSpec>teste-oai-pmh</setSpec>'
+        xml_str += '<setName>Teste OAI-PMH</setName>'
+        xml_str += '</set>'
+        xml_str += '<set>'
+        xml_str += '<setSpec>oai-pmh-scielo</setSpec>'
+        xml_str += '<setName>OAI-PMH SciELO</setName>'
+        xml_str += '</set>'
+        xml_str += '</ListSets>'
+        xml_str += '</root>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)

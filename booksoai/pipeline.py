@@ -141,6 +141,7 @@ class SetPipe(plumber.Pipe):
 
         return sets
 
+
 class ListSetsPipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
