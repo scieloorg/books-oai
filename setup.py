@@ -12,7 +12,9 @@ requires = [
     'waitress',
     'pymongo',
     'requests',
-    'mock'
+    'mock',
+    'plumber',
+    'lxml'
     ]
 
 setup(name='booksoai',
@@ -32,9 +34,10 @@ setup(name='booksoai',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
+      dependency_links = ['http://github.com/gustavofonseca/plumber/tarball/master#egg=plumber'],
       install_requires=requires,
       tests_require=requires,
-      test_suite="booksoai",
+      test_suite="booksoai.tests",
       entry_points="""\
       [paste.app_factory]
       main = booksoai:main

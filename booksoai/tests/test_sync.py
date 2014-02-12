@@ -2,13 +2,11 @@ import unittest
 from datetime import datetime
 
 from pyramid import testing
-from pyramid.httpexceptions import HTTPNotFound
 
-from .utils import get_db_connection
-from .sync import mark_as_deleted
-from .sync import get_updates, update_from_api, adapt_data
+from booksoai.utils import get_db_connection
+from booksoai.sync import mark_as_deleted
+from booksoai.sync import get_updates, update_from_api, adapt_data
 
-from porteira.porteira import Schema
 from mock import patch, call
 
 
@@ -21,27 +19,6 @@ settings['db_conn'] = get_db_connection(settings)
 def tearDownModule():
     db = get_db_connection(settings)
     db.connection.drop_database(db.name)
-
-
-class ViewTests(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-
-    def test_invalid_verb_return_404(self):
-        from .views import oai_pmh
-        request = testing.DummyRequest()
-        request.params = {'verb':'bla'}
-        self.assertRaises(HTTPNotFound, oai_pmh, request)
-
-    def test_dummy_identify_return_identify_info(self):
-        from .views import oai_pmh
-        request = testing.DummyRequest()
-        request.params = {'verb':'Identify'}
-        response = oai_pmh(request)
-        self.assertEqual(response['OAI-PMH']['Identify']['repositoryName'], 'SciELO Books')
 
 
 class SyncTests(unittest.TestCase):

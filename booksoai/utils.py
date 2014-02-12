@@ -14,3 +14,9 @@ def get_db_connection(settings):
         sys.exit(1)
     db = conn[db_url.path[1:]]
     return db
+
+def slugfy(string):
+	string = string.lower()
+	string = string.strip()
+	string = string.replace(' ', '-')
+	return string
