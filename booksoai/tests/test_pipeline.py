@@ -43,7 +43,10 @@ class TestResponseDatePipe(unittest.TestCase):
 class TestRequestPipe(unittest.TestCase):
 
     def test_request_add_verb_and_base_url(self):
-        data = {'verb': 'Identifier', 'baseURL': 'http://books.scielo.org/oai/'}
+        data = {
+            'baseURL': 'http://books.scielo.org/oai/',
+            'request': {'verb': 'Identifier'}
+        }
         xml = etree.Element('root')
         
         pipe = pipeline.RequestPipe()
@@ -159,15 +162,17 @@ class TestHeaderPipe(unittest.TestCase):
             'datestamp': datetime(2014, 02, 12, 10, 55, 00),
             'publisher': 'Teste OAI-PMH'
         }
-
+        root = etree.Element('root')
         pipe = pipeline.HeaderPipe()
-        xml = pipe.transform(data)
+        xml, data = pipe.transform((root, data))
 
-        xml_str = '<header>'
+        xml_str = '<root>'
+        xml_str += '<header>'
         xml_str += '<identifier>xpto</identifier>'
         xml_str += '<datestamp>2014-02-12</datestamp>'
         xml_str += '<setSpec>teste-oai-pmh</setSpec>'
         xml_str += '</header>'
+        xml_str += '</root>'
 
         self.assertEqual(etree.tostring(xml), xml_str)
 
@@ -216,9 +221,7 @@ class TestListIdentifiersPipe(unittest.TestCase):
 class TestSetPipe(unittest.TestCase):
 
     def test_set_pipe_add_set_with_two_subelements(self):
-        data = {
-            'publisher': 'Editora UNESP',
-        }
+        data = 'Editora UNESP'
 
         pipe = pipeline.SetPipe()
         xml = pipe.transform(data)
@@ -237,13 +240,7 @@ class TestListSetsPipe(unittest.TestCase):
         data = {
             'verb': 'ListIdentifiers',
             'baseURL': 'http://books.scielo.org/oai/',
-            'books': [
-                {
-                    'publisher': 'Teste OAI-PMH'
-                }, {
-                    'publisher': 'OAI-PMH SciELO'
-                }
-            ]
+            'books': ['Teste OAI-PMH', 'OAI-PMH SciELO']
         }
         root = etree.Element('root')
 
@@ -261,6 +258,222 @@ class TestListSetsPipe(unittest.TestCase):
         xml_str += '<setName>OAI-PMH SciELO</setName>'
         xml_str += '</set>'
         xml_str += '</ListSets>'
+        xml_str += '</root>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+
+class TestMetadataPipe(unittest.TestCase):
+
+    def test_metadata_pipe_add_record_as_dublin_core(self):
+        data = {
+            'title': 'title',
+            'creators': {
+                'collaborator': [['collaborator', None]],
+                'organizer': [['organizer', None]]
+            },
+            'description': 'description',
+            'publisher': 'publisher',
+            'date': '2014',
+            'formats': ['pdf', 'epub'],
+            'identifier': 'identifier',
+            'language': 'pt'
+        }
+        root = etree.Element('root')
+
+        pipe = pipeline.MetadataPipe()
+        xml, data = pipe.transform((root, data))
+
+        xml_str = '<root>'
+        xml_str += '<metadata>'
+        xml_str += '<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"'
+        xml_str += ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+        xml_str += ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
+        xml_str += ' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/'
+        xml_str += ' http://www.openarchives.org/OAI/2.0/oai_dc.xsd">'
+        xml_str += '<dc:title>title</dc:title>'
+        xml_str += '<dc:creator>organizer</dc:creator>'
+        xml_str += '<dc:contributor>collaborator</dc:contributor>'
+        xml_str += '<dc:description>description</dc:description>'
+        xml_str += '<dc:publisher>publisher</dc:publisher>'
+        xml_str += '<dc:date>2014</dc:date>'
+        xml_str += '<dc:type>book</dc:type>'
+        xml_str += '<dc:format>pdf</dc:format>'
+        xml_str += '<dc:format>epub</dc:format>'
+        xml_str += '<dc:identifier>identifier</dc:identifier>'
+        xml_str += '<dc:language>pt</dc:language>'
+        xml_str += '</oai_dc:dc>'
+        xml_str += '</metadata>'
+        xml_str += '</root>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+
+class TestRecordPipe(unittest.TestCase):
+
+    def test_record_pipe_add_record_node(self):
+        data = {
+            'datestamp': datetime(2014, 02, 19, 13, 05, 00),
+            'title': 'title',
+            'creators': {
+                'collaborator': [['collaborator', None]],
+                'organizer': [['organizer', None]]
+            },
+            'description': 'description',
+            'publisher': 'publisher',
+            'date': '2014',
+            'formats': ['pdf', 'epub'],
+            'identifier': 'identifier',
+            'language': 'pt'
+        }
+
+        pipe = pipeline.RecordPipe()
+        xml = pipe.transform(data)
+
+        xml_str = '<record>'
+        xml_str += '<header>'
+        xml_str += '<identifier>identifier</identifier>'
+        xml_str += '<datestamp>2014-02-19</datestamp>'
+        xml_str += '<setSpec>publisher</setSpec>'
+        xml_str += '</header>'
+        xml_str += '<metadata>'
+        xml_str += '<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"'
+        xml_str += ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+        xml_str += ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
+        xml_str += ' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/'
+        xml_str += ' http://www.openarchives.org/OAI/2.0/oai_dc.xsd">'
+        xml_str += '<dc:title>title</dc:title>'
+        xml_str += '<dc:creator>organizer</dc:creator>'
+        xml_str += '<dc:contributor>collaborator</dc:contributor>'
+        xml_str += '<dc:description>description</dc:description>'
+        xml_str += '<dc:publisher>publisher</dc:publisher>'
+        xml_str += '<dc:date>2014</dc:date>'
+        xml_str += '<dc:type>book</dc:type>'
+        xml_str += '<dc:format>pdf</dc:format>'
+        xml_str += '<dc:format>epub</dc:format>'
+        xml_str += '<dc:identifier>identifier</dc:identifier>'
+        xml_str += '<dc:language>pt</dc:language>'
+        xml_str += '</oai_dc:dc>'
+        xml_str += '</metadata>'
+        xml_str += '</record>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+
+class TestGetRecordPipe(unittest.TestCase):
+
+    def test_get_record_pipe_add_get_record(self):
+        data = {
+            'verb': 'GetRecord',
+            'baseURL': 'http://books.scielo.org/oai/',
+            'book': [{
+                'datestamp': datetime(2014, 02, 19, 13, 05, 00),
+                'title': 'title',
+                'creators': {
+                    'collaborator': [['collaborator', None]],
+                    'organizer': [['organizer', None]]
+                },
+                'description': 'description',
+                'publisher': 'publisher',
+                'date': '2014',
+                'formats': ['pdf', 'epub'],
+                'identifier': 'identifier',
+                'language': 'pt'
+            }]
+        }
+
+        root = etree.Element('root')
+        pipe = pipeline.GetRecordPipe()
+        xml, data = pipe.transform((root, data))
+
+        xml_str = '<root>'
+        xml_str += '<GetRecord>'
+        xml_str += '<record>'
+        xml_str += '<header>'
+        xml_str += '<identifier>identifier</identifier>'
+        xml_str += '<datestamp>2014-02-19</datestamp>'
+        xml_str += '<setSpec>publisher</setSpec>'
+        xml_str += '</header>'
+        xml_str += '<metadata>'
+        xml_str += '<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"'
+        xml_str += ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+        xml_str += ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
+        xml_str += ' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/'
+        xml_str += ' http://www.openarchives.org/OAI/2.0/oai_dc.xsd">'
+        xml_str += '<dc:title>title</dc:title>'
+        xml_str += '<dc:creator>organizer</dc:creator>'
+        xml_str += '<dc:contributor>collaborator</dc:contributor>'
+        xml_str += '<dc:description>description</dc:description>'
+        xml_str += '<dc:publisher>publisher</dc:publisher>'
+        xml_str += '<dc:date>2014</dc:date>'
+        xml_str += '<dc:type>book</dc:type>'
+        xml_str += '<dc:format>pdf</dc:format>'
+        xml_str += '<dc:format>epub</dc:format>'
+        xml_str += '<dc:identifier>identifier</dc:identifier>'
+        xml_str += '<dc:language>pt</dc:language>'
+        xml_str += '</oai_dc:dc>'
+        xml_str += '</metadata>'
+        xml_str += '</record>'
+        xml_str += '</GetRecord>'
+        xml_str += '</root>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+class TestListRecordsPipe(unittest.TestCase):
+
+    def test_list_records_pipe_add_many_records_node(self):
+        data = {
+            'verb': 'ListRecords',
+            'baseURL': 'http://books.scielo.org/oai/',
+            'book': [{
+                'datestamp': datetime(2014, 02, 19, 13, 05, 00),
+                'title': 'title',
+                'creators': {
+                    'collaborator': [['collaborator', None]],
+                    'organizer': [['organizer', None]]
+                },
+                'description': 'description',
+                'publisher': 'publisher',
+                'date': '2014',
+                'formats': ['pdf', 'epub'],
+                'identifier': 'identifier',
+                'language': 'pt'
+            }]
+        }
+
+        root = etree.Element('root')
+        pipe = pipeline.ListRecordsPipe()
+        xml, data = pipe.transform((root, data))
+
+        xml_str = '<root>'
+        xml_str += '<ListRecords>'
+        xml_str += '<record>'
+        xml_str += '<header>'
+        xml_str += '<identifier>identifier</identifier>'
+        xml_str += '<datestamp>2014-02-19</datestamp>'
+        xml_str += '<setSpec>publisher</setSpec>'
+        xml_str += '</header>'
+        xml_str += '<metadata>'
+        xml_str += '<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"'
+        xml_str += ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+        xml_str += ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
+        xml_str += ' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/'
+        xml_str += ' http://www.openarchives.org/OAI/2.0/oai_dc.xsd">'
+        xml_str += '<dc:title>title</dc:title>'
+        xml_str += '<dc:creator>organizer</dc:creator>'
+        xml_str += '<dc:contributor>collaborator</dc:contributor>'
+        xml_str += '<dc:description>description</dc:description>'
+        xml_str += '<dc:publisher>publisher</dc:publisher>'
+        xml_str += '<dc:date>2014</dc:date>'
+        xml_str += '<dc:type>book</dc:type>'
+        xml_str += '<dc:format>pdf</dc:format>'
+        xml_str += '<dc:format>epub</dc:format>'
+        xml_str += '<dc:identifier>identifier</dc:identifier>'
+        xml_str += '<dc:language>pt</dc:language>'
+        xml_str += '</oai_dc:dc>'
+        xml_str += '</metadata>'
+        xml_str += '</record>'
+        xml_str += '</ListRecords>'
         xml_str += '</root>'
 
         self.assertEqual(etree.tostring(xml), xml_str)

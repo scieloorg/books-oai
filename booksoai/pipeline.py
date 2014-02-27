@@ -32,9 +32,11 @@ class ResponseDatePipe(plumber.Pipe):
 class RequestPipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
-        verb = data.get('verb')
         sub = etree.SubElement(xml, 'request')
-        sub.attrib['verb'] = verb
+        
+        for key, value in data.get('request').items():            
+            sub.attrib[key] = value
+        
         sub.text = data.get('baseURL')
         return (xml, data)
 
@@ -96,8 +98,9 @@ class MetadataFormatPipe(plumber.Pipe):
 
 
 class HeaderPipe(plumber.Pipe):
-    def transform(self, data):
-        header = etree.Element('header')
+    def transform(self, item):
+        xml, data = item
+        header = etree.SubElement(xml, 'header')
 
         identifier = etree.SubElement(header, 'identifier')
         identifier.text = data.get('identifier')
@@ -109,7 +112,7 @@ class HeaderPipe(plumber.Pipe):
         set_spec = etree.SubElement(header, 'setSpec')
         set_spec.text = slugfy(data.get('publisher', ''))
 
-        return header
+        return (xml, data)
 
 
 class ListIdentifiersPipe(plumber.Pipe):
@@ -121,10 +124,11 @@ class ListIdentifiersPipe(plumber.Pipe):
             HeaderPipe()
         )
         books = data.get('books')
-        results = ppl.run(books)
+        items = ((sub, book) for book in books)
+        results = ppl.run(items)
         
         for header in results:
-            sub.append(header)
+            pass
 
         return (xml, data)
 
@@ -134,10 +138,10 @@ class SetPipe(plumber.Pipe):
         sets = etree.Element('set')
 
         set_spec = etree.SubElement(sets, 'setSpec')
-        set_spec.text = slugfy(data.get('publisher', ''))
+        set_spec.text = slugfy(data)
         
         set_name = etree.SubElement(sets, 'setName')
-        set_name.text = data.get('publisher', '')
+        set_name.text = data
 
         return sets
 
@@ -155,6 +159,103 @@ class ListSetsPipe(plumber.Pipe):
 
         for _set in results:
             sub.append(_set)
+
+        return (xml, data)
+
+
+class MetadataPipe(plumber.Pipe):
+    xmlns = "http://www.openarchives.org/OAI/2.0/oai_dc/"
+    dc = "http://purl.org/dc/elements/1.1/"
+    xsi = "http://www.w3.org/2001/XMLSchema-instance"
+    schemaLocation = "http://www.openarchives.org/OAI/2.0/oai_dc/"
+    schemaLocation += " http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
+    attrib = {"{%s}schemaLocation" % xsi: schemaLocation}
+
+    def transform(self, item):
+        xml, data = item
+        metadata = etree.SubElement(xml, 'metadata')
+        oai_rec = etree.SubElement(metadata, '{%s}dc' % self.xmlns, 
+            nsmap={'oai_dc': self.xmlns, 'dc': self.dc ,'xsi': self.xsi},
+            attrib=self.attrib
+        )
+
+        title = etree.SubElement(oai_rec, '{%s}title' % self.dc)
+        title.text = data.get('title')
+
+        creator = etree.SubElement(oai_rec, '{%s}creator' % self.dc)
+        creator.text = data.get('creators').get('organizer')[0][0]
+        
+        contributor = etree.SubElement(oai_rec, '{%s}contributor' % self.dc)
+        contributor.text = data.get('creators').get('collaborator')[0][0]
+        
+        description = etree.SubElement(oai_rec, '{%s}description' % self.dc)
+        description.text = data.get('description')
+
+        publisher = etree.SubElement(oai_rec, '{%s}publisher' % self.dc)
+        publisher.text = data.get('publisher')
+
+        date = etree.SubElement(oai_rec, '{%s}date' % self.dc)
+        date.text = data.get('date')
+
+        _type = etree.SubElement(oai_rec, '{%s}type' % self.dc)
+        _type.text = 'book'
+
+        for f in data.get('formats'):
+            format = etree.SubElement(oai_rec, '{%s}format' % self.dc)
+            format.text = f
+
+        identifier = etree.SubElement(oai_rec, '{%s}identifier' % self.dc)
+        identifier.text = data.get('identifier')
+
+        language = etree.SubElement(oai_rec, '{%s}language' % self.dc)
+        language.text = data.get('language')
+
+        return (xml, data)
+
+
+class RecordPipe(plumber.Pipe):
+    def transform(self, data):
+        record = etree.Element('record')
+
+        ppl = plumber.Pipeline(
+            HeaderPipe(),
+            MetadataPipe()
+        )
+        results = ppl.run([(record, data)])
+
+        for result in results:
+            pass
+
+        return record
+
+
+class GetRecordPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'GetRecord')
+
+        ppl = plumber.Pipeline(
+            RecordPipe(),
+        )
+        results = ppl.run(data.get('book'))
+        record = results.next()
+        sub.append(record)
+
+        return (xml, data)
+
+
+class ListRecordsPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'ListRecords')
+
+        ppl = plumber.Pipeline(
+            RecordPipe(),
+        )
+        results = ppl.run(data.get('book'))
+        
+        for record in results:
+            sub.append(record)
 
         return (xml, data)
 
