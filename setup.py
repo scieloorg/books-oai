@@ -13,7 +13,8 @@ requires = [
     'pymongo',
     'requests',
     'mock',
-    'plumber'
+    'plumber',
+    'lxml'
     ]
 
 setup(name='booksoai',

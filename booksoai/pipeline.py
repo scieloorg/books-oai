@@ -4,6 +4,7 @@ import plumber
 
 from lxml import etree
 from datetime import datetime
+from utils import slugfy
 
 
 xmlns = "http://www.openarchives.org/OAI/2.0/"
@@ -90,6 +91,70 @@ class MetadataFormatPipe(plumber.Pipe):
 
             namespace = etree.SubElement(metadata_format, 'metadataNamespace')
             namespace.text = format.get('namespace')
+
+        return (xml, data)
+
+
+class HeaderPipe(plumber.Pipe):
+    def transform(self, data):
+        header = etree.Element('header')
+
+        identifier = etree.SubElement(header, 'identifier')
+        identifier.text = data.get('identifier')
+
+        datestamp = etree.SubElement(header, 'datestamp')
+        date = data.get('datestamp')
+        datestamp.text = date.strftime('%Y-%m-%d')
+
+        set_spec = etree.SubElement(header, 'setSpec')
+        set_spec.text = slugfy(data.get('publisher', ''))
+
+        return header
+
+
+class ListIdentifiersPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'ListIdentifiers')
+
+        ppl = plumber.Pipeline(
+            HeaderPipe()
+        )
+        books = data.get('books')
+        results = ppl.run(books)
+        
+        for header in results:
+            sub.append(header)
+
+        return (xml, data)
+
+
+class SetPipe(plumber.Pipe):
+    def transform(self, data):
+        sets = etree.Element('set')
+
+        set_spec = etree.SubElement(sets, 'setSpec')
+        set_spec.text = slugfy(data.get('publisher', ''))
+        
+        set_name = etree.SubElement(sets, 'setName')
+        set_name.text = data.get('publisher', '')
+
+        return sets
+
+
+class ListSetsPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'ListSets')
+
+        ppl = plumber.Pipeline(
+            SetPipe()
+        )
+        sets = data.get('books')
+        results = ppl.run(sets)
+
+        for _set in results:
+            sub.append(_set)
 
         return (xml, data)
 
