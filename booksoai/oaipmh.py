@@ -9,9 +9,7 @@ import pipeline
 
 
 class IdentifyVerb(object):
-
     data = {
-        'verb': 'Identify',
         'repositoryName': 'SciELO Books',
         'baseURL': 'http://books.scielo.org/oai/',
         'protocolVersion': '2.0',
@@ -20,6 +18,9 @@ class IdentifyVerb(object):
         'deletedRecord': 'persistent',
         'granularity': 'YYYY-MM-DD'
     }
+
+    def __init__(self, **request_kwargs):
+        self.data['request'] = request_kwargs
 
     def __str__(self):
         ppl = plumber.Pipeline(
@@ -36,9 +37,7 @@ class IdentifyVerb(object):
 
 
 class ListMetadataFormatsVerb(object):
-
     data = {
-        'verb': 'ListMetadataFormats',
         'baseURL': 'http://books.scielo.org/oai/',
         'formats': [
             {
@@ -48,6 +47,9 @@ class ListMetadataFormatsVerb(object):
             }
         ]
     }
+
+    def __init__(self, **request_kwargs):
+        self.data['request'] = request_kwargs
 
     def __str__(self):
         ppl = plumber.Pipeline(
@@ -66,9 +68,9 @@ class ListMetadataFormatsVerb(object):
 
 class ListIdentifiersVerb(object):
 
-    def __init__(self, books):
+    def __init__(self, books, **request_kwargs):
         self.data = {
-            'verb': 'ListIdentifiers',
+            'request': request_kwargs,
             'baseURL': 'http://books.scielo.org/oai/',
             'books': books
         }
@@ -89,11 +91,11 @@ class ListIdentifiersVerb(object):
 
 class ListSetsVerb(object):
 
-    def __init__(self, books):
+    def __init__(self, books, **request_kwargs):
         self.data = {
-            'verb': 'ListSets',
+            'request': request_kwargs,
             'baseURL': 'http://books.scielo.org/oai/',
-            'books': books
+            'books': books.distinct('publisher')
         }
 
     def __str__(self):
@@ -108,3 +110,60 @@ class ListSetsVerb(object):
         results = ppl.run([self.data])
         xml = ''.join([etree.tostring(record) for record in results])
         return xml
+
+
+class GetRecordVerb(object):
+    def __init__(self, books, **request_kwargs):
+        self.data = {
+            'request': request_kwargs,
+            'baseURL': 'http://books.scielo.org/oai/',
+            'book': books
+        }
+
+    def __str__(self):
+        ppl = plumber.Pipeline(
+            pipeline.SetupPipe(),
+            pipeline.ResponseDatePipe(),
+            pipeline.RequestPipe(),
+            pipeline.GetRecordPipe(),
+            pipeline.TearDownPipe()
+        )
+
+        results = ppl.run([self.data])
+        xml = results.next()
+        return etree.tostring(xml)
+
+
+class ListRecordsVerb(object):
+    def __init__(self, books, **request_kwargs):
+        self.data = {
+            'request': request_kwargs,
+            'baseURL': 'http://books.scielo.org/oai/',
+            'book': books
+        }
+
+    def __str__(self):
+        ppl = plumber.Pipeline(
+            pipeline.SetupPipe(),
+            pipeline.ResponseDatePipe(),
+            pipeline.RequestPipe(),
+            pipeline.ListRecordsPipe(),
+            pipeline.TearDownPipe()
+        )
+
+        results = ppl.run([self.data])
+        xml = ''.join([etree.tostring(record) for record in results])
+        return xml
+
+
+class CannotDisseminateFormatError(object):
+    def __init__(self, params):
+        self.params = params
+
+    def __str__(self):
+        ppl = plumber.Pipeline(
+            pipeline.SetupPipe(),
+            pipeline.ResponseDatePipe(),
+            pipeline.RequestPipe(),
+            #pipeline.MetadataFormatErrorPipe()
+        )
