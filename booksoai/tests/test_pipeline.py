@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime
+from pyramid.registry import Registry
 
 from lxml import etree
 from mock import patch
@@ -366,7 +367,7 @@ class TestGetRecordPipe(unittest.TestCase):
         data = {
             'verb': 'GetRecord',
             'baseURL': 'http://books.scielo.org/oai/',
-            'book': [{
+            'books': [{
                 'datestamp': datetime(2014, 02, 19, 13, 05, 00),
                 'title': 'title',
                 'creators': {
@@ -419,13 +420,14 @@ class TestGetRecordPipe(unittest.TestCase):
 
         self.assertEqual(etree.tostring(xml), xml_str)
 
+
 class TestListRecordsPipe(unittest.TestCase):
 
     def test_list_records_pipe_add_many_records_node(self):
         data = {
             'verb': 'ListRecords',
             'baseURL': 'http://books.scielo.org/oai/',
-            'book': [{
+            'books': [{
                 'datestamp': datetime(2014, 02, 19, 13, 05, 00),
                 'title': 'title',
                 'creators': {
@@ -474,6 +476,45 @@ class TestListRecordsPipe(unittest.TestCase):
         xml_str += '</metadata>'
         xml_str += '</record>'
         xml_str += '</ListRecords>'
+        xml_str += '</root>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+
+class TestResumptionTokenPipe(unittest.TestCase):
+    
+    @patch.object(Registry, 'settings')
+    def test_resumption_token_add_next_token_if_not_finished(self, mock_settings):
+        mock_settings.return_value = {'items_per_page': '2'}
+        data = {
+            'books': [{}, {}],
+            'request': {}
+        }
+        root = etree.Element('root')
+
+        pipe = pipeline.ResumptionTokenPipe()
+        xml, data = pipe.transform((root, data))
+
+        xml_str = '<root>'
+        xml_str += '<resumptionToken>1</resumptionToken>'
+        xml_str += '</root>'
+
+        self.assertEqual(etree.tostring(xml), xml_str)
+
+    @patch.object(Registry, 'settings')
+    def test_resumption_token_empty_if_finished(self, mock_settings):
+        mock_settings.return_value = {'items_per_page': '2'}
+        data = {
+            'books': [{}, {}],
+            'request': {'resumptionToken': '1'}
+        }
+        root = etree.Element('root')
+
+        pipe = pipeline.ResumptionTokenPipe()
+        xml, data = pipe.transform((root, data))
+
+        xml_str = '<root>'
+        xml_str += '<resumptionToken/>'
         xml_str += '</root>'
 
         self.assertEqual(etree.tostring(xml), xml_str)
