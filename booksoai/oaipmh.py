@@ -7,6 +7,8 @@ from datetime import datetime
 
 import pipeline
 
+BASEURL = 'http://books.scielo.org/oai/'
+
 
 class BadArgumentError(Exception):
     """Raised when a Verb receives wrong args."""
@@ -38,7 +40,7 @@ class BadResumptionTokenError(Exception):
 class IdentifyVerb(object):
     data = {
         'repositoryName': 'SciELO Books',
-        'baseURL': 'http://books.scielo.org/oai/',
+        'baseURL': BASEURL,
         'protocolVersion': '2.0',
         'adminEmail': 'books@scielo.org',
         'earliestDatestamp': datetime(1909, 04, 01),
@@ -70,7 +72,7 @@ class IdentifyVerb(object):
 
 class ListMetadataFormatsVerb(object):
     data = {
-        'baseURL': 'http://books.scielo.org/oai/',
+        'baseURL': BASEURL,
         'formats': [
             {
                 'prefix': 'oai_dc',
@@ -85,6 +87,7 @@ class ListMetadataFormatsVerb(object):
         diff = set(request_kwargs) - self.allowed_args
         if diff:
             raise BadArgumentError()
+        
         self.data['request'] = request_kwargs
 
     def __str__(self):
@@ -116,7 +119,7 @@ class ListIdentifiersVerb(object):
         
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
             'books': books,
         }
 
@@ -146,7 +149,7 @@ class ListSetsVerb(object):
         
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
             'books': books.distinct('publisher'),
         }
 
@@ -171,13 +174,14 @@ class GetRecordVerb(object):
 
     def __init__(self, books, request_kwargs):
 
-        self.data = {
-            'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
-            'books': books
-        }
         if set(request_kwargs) != self.required_args:
             raise BadArgumentError()
+        
+        self.data = {
+            'request': request_kwargs,
+            'baseURL': BASEURL,
+            'books': books
+        }
 
     def __str__(self):
         ppl = plumber.Pipeline(
@@ -207,7 +211,7 @@ class ListRecordsVerb(object):
     
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
             'books': books,
         }
 
@@ -230,7 +234,7 @@ class CannotDisseminateFormat(object):
     def __init__(self, request_kwargs):
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
         }
 
     def __str__(self):
@@ -252,7 +256,7 @@ class BadVerb(object):
     def __init__(self, request_kwargs):
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
         }
 
     def __str__(self):
@@ -274,7 +278,7 @@ class IDDoesNotExist(object):
     def __init__(self, request_kwargs):
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
         }
 
     def __str__(self):
@@ -296,7 +300,7 @@ class NoRecordsMatch(object):
     def __init__(self, request_kwargs):
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
         }
 
     def __str__(self):
@@ -318,7 +322,7 @@ class BadArgument(object):
     def __init__(self, request_kwargs, books=None):
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
         }
 
     def __str__(self):
@@ -340,7 +344,7 @@ class BadResumptionToken(object):
     def __init__(self, request_kwargs, books=None):
         self.data = {
             'request': request_kwargs,
-            'baseURL': 'http://books.scielo.org/oai/',
+            'baseURL': BASEURL,
         }
 
     def __str__(self):

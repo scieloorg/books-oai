@@ -216,7 +216,7 @@ class MetadataPipe(plumber.Pipe):
             format.text = f
 
         identifier = etree.SubElement(oai_rec, '{%s}identifier' % self.dc)
-        identifier.text = data.get('identifier')
+        identifier.text = 'http://books.scielo.org/id/%s' % data.get('identifier')
 
         language = etree.SubElement(oai_rec, '{%s}language' % self.dc)
         language.text = data.get('language')

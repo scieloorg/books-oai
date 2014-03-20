@@ -116,7 +116,7 @@ def update_from_api(settings):
         logger.error('%s: %s' % (e.__class__.__name__, e.message))
 
     except Exception as e:
-        logger.error('bla %s' % e.message)
+        logger.error('%s' % e.message)
 
 
 def do_sync(settings):
