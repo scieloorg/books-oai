@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
 import plumber
+import pyramid
 
 from lxml import etree
+from plumber import precondition
 from datetime import datetime
 from utils import slugfy
 
@@ -12,6 +14,12 @@ xsi = "http://www.w3.org/2001/XMLSchema-instance"
 schemaLocation = "http://www.openarchives.org/OAI/2.0/ "
 schemaLocation += "http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
 attrib = {"{%s}schemaLocation" % xsi: schemaLocation}
+
+
+def deleted_precond(item):
+    xml, data = item
+    if data.get('deleted'):
+        raise plumber.UnmetPrecondition
 
 
 class SetupPipe(plumber.Pipe):
@@ -33,8 +41,8 @@ class RequestPipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
         sub = etree.SubElement(xml, 'request')
-        
-        for key, value in data.get('request').items():            
+
+        for key, value in data.get('request').items():
             sub.attrib[key] = value
         
         sub.text = data.get('baseURL')
@@ -101,6 +109,8 @@ class HeaderPipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
         header = etree.SubElement(xml, 'header')
+        if data.get('deleted'):
+            header.attrib['status'] = 'deleted'
 
         identifier = etree.SubElement(header, 'identifier')
         identifier.text = data.get('identifier')
@@ -171,6 +181,7 @@ class MetadataPipe(plumber.Pipe):
     schemaLocation += " http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
     attrib = {"{%s}schemaLocation" % xsi: schemaLocation}
 
+    @precondition(deleted_precond)
     def transform(self, item):
         xml, data = item
         metadata = etree.SubElement(xml, 'metadata')
@@ -205,7 +216,7 @@ class MetadataPipe(plumber.Pipe):
             format.text = f
 
         identifier = etree.SubElement(oai_rec, '{%s}identifier' % self.dc)
-        identifier.text = data.get('identifier')
+        identifier.text = 'http://books.scielo.org/id/%s' % data.get('identifier')
 
         language = etree.SubElement(oai_rec, '{%s}language' % self.dc)
         language.text = data.get('language')
@@ -237,7 +248,7 @@ class GetRecordPipe(plumber.Pipe):
         ppl = plumber.Pipeline(
             RecordPipe(),
         )
-        results = ppl.run(data.get('book'))
+        results = ppl.run(data.get('books'))
         record = results.next()
         sub.append(record)
 
@@ -252,7 +263,7 @@ class ListRecordsPipe(plumber.Pipe):
         ppl = plumber.Pipeline(
             RecordPipe(),
         )
-        results = ppl.run(data.get('book'))
+        results = ppl.run(data.get('books'))
         
         for record in results:
             sub.append(record)
@@ -260,8 +271,81 @@ class ListRecordsPipe(plumber.Pipe):
         return (xml, data)
 
 
+class ResumptionTokenPipe(plumber.Pipe):
+
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'resumptionToken')
+
+        try:
+            total_books = data.get('books').count()
+        except (AttributeError, TypeError):
+            total_books = len(data.get('books', []))
+
+        settings = pyramid.threadlocal.get_current_registry().settings
+        items_per_page = int(settings['items_per_page'])
+        resumption_token = int(data['request'].get('resumptionToken', 0))
+        finished = items_per_page * (resumption_token + 1) >= total_books
+        
+        if not finished:
+            sub.text = str(resumption_token + 1)
+        
+        return (xml, data)
+
+
 class TearDownPipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
         return xml
+
+
+class BadVerbPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'error')
+        sub.attrib['code'] = 'badVerb'
+        sub.text = 'Illegal OAI verb'
+        return (xml, data)
+
+
+class IdNotExistPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'error')
+        sub.attrib['code'] = 'idDoesNotExist'
+        sub.text = 'No matching identifier'
+        return (xml, data)
+
+
+class NoRecordsPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'error')
+        sub.attrib['code'] = 'noRecordsMatch'
+        return (xml, data)
+
+
+class BadArgumentPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'error')
+        sub.attrib['code'] = 'badArgument'
+        return (xml, data)
+
+
+class MetadataFormatErrorPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'error')
+        sub.attrib['code'] = 'cannotDisseminateFormat'
+        return (xml, data)
+
+
+class BadResumptionTokenPipe(plumber.Pipe):
+    def transform(self, item):
+        xml, data = item
+        sub = etree.SubElement(xml, 'error')
+        sub.attrib['code'] = 'badResumptionToken'
+        return (xml, data)
+
 

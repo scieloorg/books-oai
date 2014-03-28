@@ -8,6 +8,7 @@ from requests.exceptions import HTTPError, ConnectionError
 from .utils import get_db_connection
 
 
+logging.basicConfig()
 logger = logging.getLogger('Sync')
 
 FIELD_MAP = (
@@ -80,15 +81,18 @@ def get_updates(api_uri, db):
     changes_uri = '%s_changes?since=%s' % (api_uri, last_change)
     data = get_data_from_api(changes_uri)
 
+    return data['results']
+
+
+def update_last_seq(db, seq):
     db.updates.update({
         '_id': 1
     }, {
         '$set': {
-            'last_seq': data['last_seq'],
+            'last_seq': seq,
             'updated_at': datetime.now()
         }
     }, upsert=True)
-    return data['results']
 
 
 def update_from_api(settings):
@@ -106,6 +110,7 @@ def update_from_api(settings):
                 data = get_data_from_api(uri, revision)
                 adapted = adapt_data(data)
                 persists_data(adapted, db)
+                update_last_seq(db, update['seq'])
 
     except (HTTPError, ConnectionError) as e:
         logger.error('%s: %s' % (e.__class__.__name__, e.message))

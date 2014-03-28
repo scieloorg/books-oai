@@ -5,7 +5,6 @@ import oaipmh
 
 from datetime import datetime
 from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPNotFound
 
 
 VERBS = {
@@ -23,30 +22,72 @@ def oai_pmh(request):
     try:
         OaiVerb, need_books = VERBS[request_verb]
     except KeyError:
-        raise HTTPNotFound()
+        OaiVerb = oaipmh.BadVerb
+        need_books = False
 
-    params = request.params.copy()
+    request_kwargs = request.params.copy()
+    params = {'request_kwargs': request_kwargs}
     if need_books:
-        search = {}
-        if 'identifier' in params:
-            search['identifier'] = params['identifier']
+        try:
+            params['books'] = filter_books(request_kwargs, request.db, request.registry.settings)
+        except oaipmh.CannotDisseminateFormatError:
+            OaiVerb = oaipmh.CannotDisseminateFormat
+        except oaipmh.IDDoesNotExistError:
+            OaiVerb = oaipmh.IDDoesNotExist
+        except oaipmh.NoRecordsMatchError:
+            OaiVerb = oaipmh.NoRecordsMatch
+        except oaipmh.BadResumptionTokenError:
+            OaiVerb = oaipmh.BadResumptionToken
+        except ValueError:
+            OaiVerb = oaipmh.BadArgument
 
-        if 'set' in params:
-            _set = params['set']
-            _set = _set.replace('-', ' ')
-            search['publisher'] = re.compile(_set, re.IGNORECASE)
+    try:
+        return OaiVerb(**params)
+    except oaipmh.BadArgumentError:
+        return oaipmh.BadArgument(request_kwargs=request.params.copy())
 
-        if 'from' in params:
-            _from = params['from']
-            _from = datetime.strptime(_from, '%Y-%m-%d')
-            search['datestamp'] = {'$gte': _from}
 
-        if 'until' in params:
-            until = params['until']
-            until = datetime.strptime(until, '%Y-%m-%d')
-            search.setdefault('datestamp', {})['$lte'] = until
+def filter_books(request_kwargs, db, settings):
+    start = 0
+    search = {}
+    resumptionToken = 0
+    metadata_prefix = request_kwargs.get('metadataPrefix')
+    items_per_page = int(settings.get('items_per_page', 100))
 
-        params['books'] = request.db.books.find(search)
+    if metadata_prefix and metadata_prefix != u'oai_dc':
+        raise oaipmh.CannotDisseminateFormatError
 
-    return OaiVerb(**params)
+    if 'identifier' in request_kwargs:
+        search['identifier'] = request_kwargs['identifier']
+        if not db.books.find_one(search):
+            raise oaipmh.IDDoesNotExistError
 
+    if 'set' in request_kwargs:
+        _set = request_kwargs['set']
+        _set = _set.replace('-', ' ')
+        search['publisher'] = re.compile(_set, re.IGNORECASE)
+
+    if 'from' in request_kwargs:
+        _from = request_kwargs['from']
+        _from = datetime.strptime(_from, '%Y-%m-%d')
+        search['datestamp'] = {'$gte': _from}
+
+    if 'until' in request_kwargs:
+        until = request_kwargs['until']
+        until = datetime.strptime(until, '%Y-%m-%d')
+        search.setdefault('datestamp', {})['$lte'] = until
+
+    if 'resumptionToken' in request_kwargs:
+        resumptionToken = int(request_kwargs['resumptionToken'])
+        start = items_per_page * resumptionToken
+
+    books = db.books.find(search).sort('datestamp')[start: start + items_per_page]
+    count = books.count()
+    
+    if not count:
+        raise oaipmh.NoRecordsMatchError
+
+    if count < start:
+        raise oaipmh.BadResumptionTokenError
+
+    return books

@@ -35,10 +35,8 @@ class SyncTests(unittest.TestCase):
         mock_data.return_value = {'results': [], 'last_seq':0}
  
         resp = get_updates(settings['scielo_uri'], settings['db_conn'])
-        update = self.db.updates.find_one()
         
         self.assertEquals(resp, [])
-        self.assertEquals(update['last_seq'], 0)
 
     @patch('booksoai.sync.get_data_from_api')
     def test_get_updates_with_updates_return_updates_list(self, mock_data):
@@ -78,7 +76,7 @@ class SyncTests(unittest.TestCase):
     def test_update_from_api_with_updates(self, mock_update, mock_api_data, mock_persists, mock_datetime):
         test_datetime = datetime(2014, 01, 31, 0, 0)
         mock_datetime.now.return_value = test_datetime
-        mock_update.return_value = [{'id':1, 'changes':[{'rev': '2'}]}]
+        mock_update.return_value = [{'seq':1 ,'id':1, 'changes':[{'rev': '2'}]}]
         mock_api_data.return_value = {'_id':10, 'publisher': 'teste'}
 
         update_from_api(settings)
