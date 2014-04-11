@@ -56,7 +56,7 @@ class SyncTests(unittest.TestCase):
 
         get_updates(settings['scielo_uri'], settings['db_conn'])
         
-        api_data_call = call('%s_changes?since=%s' % (settings['scielo_uri'], 2))
+        api_data_call = call('%s/changes/?since=%s' % (settings['scielo_uri'], 2))
         self.assertEquals(mock_data.call_args_list, [api_data_call])
 
     @patch('booksoai.sync.get_data_from_api')
@@ -81,7 +81,7 @@ class SyncTests(unittest.TestCase):
 
         update_from_api(settings)
 
-        uri = '%s%s/' % (settings['scielo_uri'], 1)
+        uri = '%s/book/%s/' % (settings['scielo_uri'], 1)
         api_data_call = call(uri, {'rev':'2'})
         persists_call = call({'datestamp': test_datetime, 'identifier':10, 'publisher': 'teste'}, settings['db_conn'])
 

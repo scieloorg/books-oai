@@ -70,6 +70,7 @@ def persists_data(data, db):
 
 def get_data_from_api(uri, revision=None):
     req = requests.get(uri, params=revision)
+    req.raise_for_status()
     data = req.json()
     return data
 
@@ -78,7 +79,7 @@ def get_updates(api_uri, db):
     update = db.updates.find_one()
     last_change = update['last_seq'] if update else 0
 
-    changes_uri = '%s_changes?since=%s' % (api_uri, last_change)
+    changes_uri = '%s/changes/?since=%s' % (api_uri, last_change)
     data = get_data_from_api(changes_uri)
 
     return data['results']
@@ -106,17 +107,23 @@ def update_from_api(settings):
                 mark_as_deleted(update, db)
             else:
                 revision = update['changes'][-1]
-                uri = '%s%s/' % (api_uri, update['id'])
-                data = get_data_from_api(uri, revision)
+                uri = '%s/book/%s/' % (api_uri, update['id'])
+                
+                try:
+                    data = get_data_from_api(uri, revision)
+                except HTTPError as e:
+                    logger.error('[ID %s] %s' % (update['id'], e.message))
+                    continue
+
                 adapted = adapt_data(data)
                 persists_data(adapted, db)
                 update_last_seq(db, update['seq'])
 
     except (HTTPError, ConnectionError) as e:
-        logger.error('%s: %s' % (e.__class__.__name__, e.message))
+        logger.exception('%s: %s' % (e.__class__.__name__, e.message))
 
     except Exception as e:
-        logger.error('%s' % e.message)
+        logger.exception('%s' % e.message)
 
 
 def do_sync(settings):
