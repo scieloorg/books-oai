@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import logging
 import plumber
 import pyramid
 
@@ -8,6 +9,9 @@ from plumber import precondition
 from datetime import datetime
 from utils import slugfy
 
+
+logging.basicConfig()
+logger = logging.getLogger('Pipeline')
 
 xmlns = "http://www.openarchives.org/OAI/2.0/"
 xsi = "http://www.w3.org/2001/XMLSchema-instance"
@@ -194,10 +198,18 @@ class MetadataPipe(plumber.Pipe):
         title.text = data.get('title')
 
         creator = etree.SubElement(oai_rec, '{%s}creator' % self.dc)
-        creator.text = data.get('creators').get('organizer')[0][0]
+        try:
+            creator.text = data.get('creators').get('organizer')[0][0]
+        except TypeError:
+            oai_rec.remove(creator)
+            logger.info("Can't get organizer for id %s" % data.get('identifier'))
         
         contributor = etree.SubElement(oai_rec, '{%s}contributor' % self.dc)
-        contributor.text = data.get('creators').get('collaborator')[0][0]
+        try:
+            contributor.text = data.get('creators').get('collaborator')[0][0]
+        except TypeError:
+            oai_rec.remove(contributor)
+            logger.info("Can't get collaborator for id %s" % data.get('identifier'))
         
         description = etree.SubElement(oai_rec, '{%s}description' % self.dc)
         description.text = data.get('description')
@@ -211,7 +223,7 @@ class MetadataPipe(plumber.Pipe):
         _type = etree.SubElement(oai_rec, '{%s}type' % self.dc)
         _type.text = 'book'
 
-        for f in data.get('formats'):
+        for f in data.get('formats', []):
             format = etree.SubElement(oai_rec, '{%s}format' % self.dc)
             format.text = f
 
