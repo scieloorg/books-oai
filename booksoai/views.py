@@ -64,7 +64,7 @@ def filter_books(request_kwargs, db, settings):
 
     if 'set' in request_kwargs:
         _set = request_kwargs['set']
-        _set = _set.replace('-', ' ')
+        _set = '^%s$' % _set.replace('-', ' ')
         search['publisher'] = re.compile(_set, re.IGNORECASE)
 
     if 'from' in request_kwargs:
