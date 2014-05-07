@@ -26,7 +26,8 @@ def oai_pmh(request):
         need_books = False
 
     request_kwargs = request.params.copy()
-    params = {'request_kwargs': request_kwargs}
+    base_url = request.url.split('?')[0]
+    params = {'request_kwargs': request_kwargs, 'base_url': base_url}
     if need_books:
         try:
             params['books'] = filter_books(request_kwargs, request.db, request.registry.settings)
@@ -44,7 +45,7 @@ def oai_pmh(request):
     try:
         return OaiVerb(**params)
     except oaipmh.BadArgumentError:
-        return oaipmh.BadArgument(request_kwargs=request.params.copy())
+        return oaipmh.BadArgument(request_kwargs=request_kwargs, base_url=base_url)
 
 
 def filter_books(request_kwargs, db, settings):
@@ -64,7 +65,7 @@ def filter_books(request_kwargs, db, settings):
 
     if 'set' in request_kwargs:
         _set = request_kwargs['set']
-        _set = _set.replace('-', ' ')
+        _set = '^%s$' % _set.replace('-', ' ')
         search['publisher'] = re.compile(_set, re.IGNORECASE)
 
     if 'from' in request_kwargs:

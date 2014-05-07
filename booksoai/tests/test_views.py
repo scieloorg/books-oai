@@ -47,12 +47,13 @@ class ViewTests(unittest.TestCase):
     def test_get_record_with_identifier(self):
         request = testing.DummyRequest()
         request.db = settings['db_conn']
+        request.url = 'http://localhost:6543/oai-pmh?'
         request.params = {'verb': 'GetRecord', 'identifier': '37t', 'metadataPrefix': 'oai_dc'}
         resp = oai_pmh(request)
         resp = str(resp)
         self.assertIn('<identifier>37t</identifier>', resp)
         self.assertIn(
-        '<request verb="GetRecord" metadataPrefix="oai_dc" identifier="37t">http://books.scielo.org/oai/</request>',
+        '<request verb="GetRecord" metadataPrefix="oai_dc" identifier="37t">http://localhost:6543/oai-pmh</request>',
         resp)
         self.assertEqual(resp.count('<record>'), 1)
         

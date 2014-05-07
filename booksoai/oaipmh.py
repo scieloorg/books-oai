@@ -7,8 +7,6 @@ from datetime import datetime
 
 import pipeline
 
-BASEURL = 'http://books.scielo.org/oai/'
-
 
 class BadArgumentError(Exception):
     """Raised when a Verb receives wrong args."""
@@ -40,7 +38,6 @@ class BadResumptionTokenError(Exception):
 class IdentifyVerb(object):
     data = {
         'repositoryName': 'SciELO Books',
-        'baseURL': BASEURL,
         'protocolVersion': '2.0',
         'adminEmail': 'books@scielo.org',
         'earliestDatestamp': datetime(1909, 04, 01),
@@ -49,11 +46,12 @@ class IdentifyVerb(object):
     }
     allowed_args = set(('verb',))
 
-    def __init__(self, request_kwargs):
+    def __init__(self, request_kwargs, base_url):
         if set(request_kwargs) != self.allowed_args:
             raise BadArgumentError()
 
         self.data['request'] = request_kwargs
+        self.data['baseURL'] = base_url
 
 
     def __str__(self):
@@ -72,7 +70,6 @@ class IdentifyVerb(object):
 
 class ListMetadataFormatsVerb(object):
     data = {
-        'baseURL': BASEURL,
         'formats': [
             {
                 'prefix': 'oai_dc',
@@ -83,12 +80,13 @@ class ListMetadataFormatsVerb(object):
     }
     allowed_args = set(('identifier', 'verb'))
 
-    def __init__(self, request_kwargs):
+    def __init__(self, request_kwargs, base_url):
         diff = set(request_kwargs) - self.allowed_args
         if diff:
             raise BadArgumentError()
         
         self.data['request'] = request_kwargs
+        self.data['baseURL'] = base_url
 
     def __str__(self):
         ppl = plumber.Pipeline(
@@ -110,7 +108,7 @@ class ListIdentifiersVerb(object):
     required_args = set(('metadataPrefix',))
     allowed_args = set(('from', 'until', 'set', 'resumptionToken', 'metadataPrefix', 'verb'))
 
-    def __init__(self, books, request_kwargs):
+    def __init__(self, books, request_kwargs, base_url):
         request_set = set(request_kwargs)
         diff = request_set - self.allowed_args
 
@@ -119,7 +117,7 @@ class ListIdentifiersVerb(object):
         
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
             'books': books,
         }
 
@@ -142,14 +140,14 @@ class ListSetsVerb(object):
 
     allowed_args = set(('resumptionToken', 'verb'))
 
-    def __init__(self, books, request_kwargs):
+    def __init__(self, books, request_kwargs, base_url):
         diff = set(request_kwargs) - self.allowed_args
         if diff:
             raise BadArgumentError()
         
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
             'books': books.distinct('publisher'),
         }
 
@@ -172,14 +170,14 @@ class GetRecordVerb(object):
 
     required_args = set(('identifier', 'metadataPrefix', 'verb'))
 
-    def __init__(self, books, request_kwargs):
+    def __init__(self, books, request_kwargs, base_url):
 
         if set(request_kwargs) != self.required_args:
             raise BadArgumentError()
         
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
             'books': books
         }
 
@@ -202,7 +200,7 @@ class ListRecordsVerb(object):
     required_args = set(('metadataPrefix',))
     allowed_args = set(('from', 'until', 'set', 'resumptionToken', 'metadataPrefix', 'verb'))
 
-    def __init__(self, books, request_kwargs):
+    def __init__(self, books, request_kwargs, base_url):
         request_set = set(request_kwargs)
         diff = request_set - self.allowed_args
 
@@ -211,7 +209,7 @@ class ListRecordsVerb(object):
     
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
             'books': books,
         }
 
@@ -231,10 +229,10 @@ class ListRecordsVerb(object):
 
 
 class CannotDisseminateFormat(object):
-    def __init__(self, request_kwargs):
+    def __init__(self, request_kwargs, base_url):
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
         }
 
     def __str__(self):
@@ -253,10 +251,10 @@ class CannotDisseminateFormat(object):
 
 class BadVerb(object):
 
-    def __init__(self, request_kwargs):
+    def __init__(self, request_kwargs, base_url):
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
         }
 
     def __str__(self):
@@ -275,10 +273,10 @@ class BadVerb(object):
 
 class IDDoesNotExist(object):
 
-    def __init__(self, request_kwargs):
+    def __init__(self, request_kwargs, base_url):
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
         }
 
     def __str__(self):
@@ -297,10 +295,10 @@ class IDDoesNotExist(object):
 
 class NoRecordsMatch(object):
 
-    def __init__(self, request_kwargs):
+    def __init__(self, request_kwargs, base_url):
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
         }
 
     def __str__(self):
@@ -319,10 +317,10 @@ class NoRecordsMatch(object):
 
 class BadArgument(object):
 
-    def __init__(self, request_kwargs, books=None):
+    def __init__(self, request_kwargs, base_url, books=None):
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
         }
 
     def __str__(self):
@@ -341,10 +339,10 @@ class BadArgument(object):
 
 class BadResumptionToken(object):
 
-    def __init__(self, request_kwargs, books=None):
+    def __init__(self, request_kwargs, base_url, books=None):
         self.data = {
             'request': request_kwargs,
-            'baseURL': BASEURL,
+            'baseURL': base_url,
         }
 
     def __str__(self):
