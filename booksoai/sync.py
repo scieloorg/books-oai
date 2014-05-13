@@ -101,14 +101,14 @@ def update_from_api(settings):
         db = get_db_connection(settings)
         api_uri = settings.get('scielo_uri')
         updates = get_updates(api_uri, db)
-        
+
         for update in updates:
             if update.get('deleted'):
                 mark_as_deleted(update, db)
             else:
                 revision = update['changes'][-1]
                 uri = '%s/book/%s/' % (api_uri, update['id'])
-                
+
                 try:
                     data = get_data_from_api(uri, revision)
                 except HTTPError as e:
