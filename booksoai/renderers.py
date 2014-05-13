@@ -3,8 +3,9 @@
 def parse_to_xml(data):
     return str(data)
 
+
 def oai_factory(info):
-    
+
     def _render(value, system):
         request = system.get('request')
         if request is not None:
@@ -13,4 +14,3 @@ def oai_factory(info):
             response.content_type = 'application/xml'
         return parse_to_xml(value)
     return _render
-

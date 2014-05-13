@@ -7,7 +7,7 @@ import pyramid
 from lxml import etree
 from plumber import precondition
 from datetime import datetime
-from utils import slugfy
+from simpleslug import slugfy
 
 
 logging.basicConfig()

@@ -14,7 +14,8 @@ requires = [
     'requests',
     'mock',
     'plumber',
-    'lxml'
+    'lxml',
+    'simpleslug'
     ]
 
 setup(name='booksoai',
@@ -34,7 +35,8 @@ setup(name='booksoai',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      dependency_links = ['http://github.com/gustavofonseca/plumber/tarball/master#egg=plumber'],
+      dependency_links=['http://github.com/scieloorg/plumber/tarball/master#egg=plumber',
+                        'http://github.com/picleslivre/simpleslug/tarball/master#egg=simpleslug'],
       install_requires=requires,
       tests_require=requires,
       test_suite="booksoai.tests",
