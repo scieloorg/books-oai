@@ -39,19 +39,20 @@ class IdentifyVerb(object):
     data = {
         'repositoryName': 'SciELO Books',
         'protocolVersion': '2.0',
-        'adminEmail': 'scielo.books@scielo.org',
-        'earliestDatestamp': datetime(1909, 04, 01),
+        'adminEmail': 'books@scielo.org',
         'deletedRecord': 'persistent',
         'granularity': 'YYYY-MM-DD'
     }
     allowed_args = set(('verb',))
 
-    def __init__(self, request_kwargs, base_url):
+    def __init__(self, last_book, request_kwargs, base_url):
+
         if set(request_kwargs) != self.allowed_args:
             raise BadArgumentError()
 
         self.data['request'] = request_kwargs
         self.data['baseURL'] = base_url
+        self.data['earliestDatestamp'] = last_book.get('updated', datetime.now().date().isoformat())
 
     def __str__(self):
         ppl = plumber.Pipeline(
