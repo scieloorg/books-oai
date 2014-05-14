@@ -26,7 +26,7 @@ class IDDoesNotExistError(Exception):
 
 class NoRecordsMatchError(Exception):
     """
-    Raised when all parameters combined 
+    Raised when all parameters combined
     result in empty list of records
     """
 
@@ -53,7 +53,6 @@ class IdentifyVerb(object):
         self.data['request'] = request_kwargs
         self.data['baseURL'] = base_url
 
-
     def __str__(self):
         ppl = plumber.Pipeline(
             pipeline.SetupPipe(),
@@ -64,8 +63,8 @@ class IdentifyVerb(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class ListMetadataFormatsVerb(object):
@@ -84,7 +83,7 @@ class ListMetadataFormatsVerb(object):
         diff = set(request_kwargs) - self.allowed_args
         if diff:
             raise BadArgumentError()
-        
+
         self.data['request'] = request_kwargs
         self.data['baseURL'] = base_url
 
@@ -99,8 +98,8 @@ class ListMetadataFormatsVerb(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class ListIdentifiersVerb(object):
@@ -114,7 +113,7 @@ class ListIdentifiersVerb(object):
 
         if diff or not self.required_args.issubset(request_set):
             raise BadArgumentError()
-        
+
         self.data = {
             'request': request_kwargs,
             'baseURL': base_url,
@@ -127,13 +126,12 @@ class ListIdentifiersVerb(object):
             pipeline.ResponseDatePipe(),
             pipeline.RequestPipe(),
             pipeline.ListIdentifiersPipe(),
-            pipeline.ResumptionTokenPipe(),
             pipeline.TearDownPipe()
         )
 
-        results = ppl.run([self.data])
-        xml = ''.join([etree.tostring(record) for record in results])
-        return xml
+        result = ppl.run([self.data])
+
+        return next(result)
 
 
 class ListSetsVerb(object):
@@ -144,7 +142,7 @@ class ListSetsVerb(object):
         diff = set(request_kwargs) - self.allowed_args
         if diff:
             raise BadArgumentError()
-        
+
         self.data = {
             'request': request_kwargs,
             'baseURL': base_url,
@@ -157,13 +155,12 @@ class ListSetsVerb(object):
             pipeline.ResponseDatePipe(),
             pipeline.RequestPipe(),
             pipeline.ListSetsPipe(),
-            pipeline.ResumptionTokenPipe(),
             pipeline.TearDownPipe()
         )
 
         results = ppl.run([self.data])
-        xml = ''.join([etree.tostring(record) for record in results])
-        return xml
+
+        return next(results)
 
 
 class GetRecordVerb(object):
@@ -174,7 +171,7 @@ class GetRecordVerb(object):
 
         if set(request_kwargs) != self.required_args:
             raise BadArgumentError()
-        
+
         self.data = {
             'request': request_kwargs,
             'baseURL': base_url,
@@ -191,8 +188,8 @@ class GetRecordVerb(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class ListRecordsVerb(object):
@@ -206,7 +203,7 @@ class ListRecordsVerb(object):
 
         if diff or not self.required_args.issubset(request_set):
             raise BadArgumentError()
-    
+
         self.data = {
             'request': request_kwargs,
             'baseURL': base_url,
@@ -219,13 +216,12 @@ class ListRecordsVerb(object):
             pipeline.ResponseDatePipe(),
             pipeline.RequestPipe(),
             pipeline.ListRecordsPipe(),
-            pipeline.ResumptionTokenPipe(),
             pipeline.TearDownPipe()
         )
 
         results = ppl.run([self.data])
-        xml = ''.join([etree.tostring(record) for record in results])
-        return xml
+
+        return next(results)
 
 
 class CannotDisseminateFormat(object):
@@ -245,8 +241,8 @@ class CannotDisseminateFormat(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class BadVerb(object):
@@ -267,8 +263,8 @@ class BadVerb(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class IDDoesNotExist(object):
@@ -289,8 +285,8 @@ class IDDoesNotExist(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class NoRecordsMatch(object):
@@ -311,8 +307,8 @@ class NoRecordsMatch(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class BadArgument(object):
@@ -333,8 +329,8 @@ class BadArgument(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)
 
 
 class BadResumptionToken(object):
@@ -355,5 +351,5 @@ class BadResumptionToken(object):
         )
 
         results = ppl.run([self.data])
-        xml = results.next()
-        return etree.tostring(xml)
+
+        return next(results)

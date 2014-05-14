@@ -48,7 +48,7 @@ class RequestPipe(plumber.Pipe):
 
         for key, value in data.get('request').items():
             sub.attrib[key] = value
-        
+
         sub.text = data.get('baseURL')
         return (xml, data)
 
@@ -57,7 +57,7 @@ class IdentifyNodePipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
         node = etree.SubElement(xml, 'Identify')
-        
+
         sub = etree.SubElement(node, 'repositoryName')
         sub.text = data.get('repositoryName')
 
@@ -137,11 +137,22 @@ class ListIdentifiersPipe(plumber.Pipe):
         ppl = plumber.Pipeline(
             HeaderPipe()
         )
+
         books = data.get('books')
         items = ((sub, book) for book in books)
+
         results = ppl.run(items)
-        
+
         for header in results:
+            pass
+
+        ppl = plumber.Pipeline(
+            ResumptionTokenPipe()
+        )
+
+        resumptionToken = ppl.run([[sub, data]])
+
+        for rt in resumptionToken:
             pass
 
         return (xml, data)
@@ -153,7 +164,7 @@ class SetPipe(plumber.Pipe):
 
         set_spec = etree.SubElement(sets, 'setSpec')
         set_spec.text = slugfy(data)
-        
+
         set_name = etree.SubElement(sets, 'setName')
         set_name.text = data
 
@@ -174,6 +185,15 @@ class ListSetsPipe(plumber.Pipe):
         for _set in results:
             sub.append(_set)
 
+        ppl = plumber.Pipeline(
+            ResumptionTokenPipe()
+        )
+
+        resumptionToken = ppl.run([[sub, data]])
+
+        for rt in resumptionToken:
+            pass
+
         return (xml, data)
 
 
@@ -189,8 +209,8 @@ class MetadataPipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
         metadata = etree.SubElement(xml, 'metadata')
-        oai_rec = etree.SubElement(metadata, '{%s}dc' % self.xmlns, 
-            nsmap={'oai_dc': self.xmlns, 'dc': self.dc ,'xsi': self.xsi},
+        oai_rec = etree.SubElement(metadata, '{%s}dc' % self.xmlns,
+            nsmap={'oai_dc': self.xmlns, 'dc': self.dc, 'xsi': self.xsi},
             attrib=self.attrib
         )
 
@@ -203,14 +223,14 @@ class MetadataPipe(plumber.Pipe):
         except TypeError:
             oai_rec.remove(creator)
             logger.info("Can't get organizer for id %s" % data.get('identifier'))
-        
+
         contributor = etree.SubElement(oai_rec, '{%s}contributor' % self.dc)
         try:
             contributor.text = data.get('creators').get('collaborator')[0][0]
         except TypeError:
             oai_rec.remove(contributor)
             logger.info("Can't get collaborator for id %s" % data.get('identifier'))
-        
+
         description = etree.SubElement(oai_rec, '{%s}description' % self.dc)
         description.text = data.get('description')
 
@@ -276,9 +296,18 @@ class ListRecordsPipe(plumber.Pipe):
             RecordPipe(),
         )
         results = ppl.run(data.get('books'))
-        
+
         for record in results:
             sub.append(record)
+
+        ppl = plumber.Pipeline(
+            ResumptionTokenPipe()
+        )
+
+        resumptionToken = ppl.run([[sub, data]])
+
+        for rt in resumptionToken:
+            pass
 
         return (xml, data)
 
@@ -298,16 +327,19 @@ class ResumptionTokenPipe(plumber.Pipe):
         items_per_page = int(settings['items_per_page'])
         resumption_token = int(data['request'].get('resumptionToken', 0))
         finished = items_per_page * (resumption_token + 1) >= total_books
-        
+
         if not finished:
             sub.text = str(resumption_token + 1)
-        
+
         return (xml, data)
 
 
 class TearDownPipe(plumber.Pipe):
     def transform(self, item):
         xml, data = item
+
+        xml = etree.tostring(xml, encoding="utf-8", method="xml", xml_declaration=True)
+
         return xml
 
 
@@ -359,5 +391,3 @@ class BadResumptionTokenPipe(plumber.Pipe):
         sub = etree.SubElement(xml, 'error')
         sub.attrib['code'] = 'badResumptionToken'
         return (xml, data)
-
-
