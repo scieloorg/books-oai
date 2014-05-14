@@ -119,7 +119,6 @@ class HeaderPipe(plumber.Pipe):
         identifier.text = data.get('identifier')
 
         datestamp = etree.SubElement(header, 'datestamp')
-        date = data.get('datestamp')
         datestamp.text = data.get('updated')
 
         set_spec = etree.SubElement(header, 'setSpec')
