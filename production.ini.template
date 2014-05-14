@@ -12,7 +12,7 @@ pyramid.debug_notfound = false
 pyramid.debug_routematch = false
 pyramid.default_locale_name = en
 
-mongo_uri = mongodb://192.168.169.148:27017/scielobooksoai
+mongo_uri = mongodb://127.0.0.1:27017/scielobooksoai
 scielo_uri = http://books.scielo.org/api/v1/
 auto_sync = True
 auto_sync_interval = 43200
@@ -43,11 +43,11 @@ keys = generic
 
 [logger_root]
 level = WARN
-handlers = console
+handlers = 
 
 [logger_booksoai]
 level = WARN
-handlers =
+handlers = 
 qualname = booksoai
 
 [handler_console]
