@@ -18,16 +18,18 @@ FIELD_MAP = (
     ('synopsis', 'description'),
     ('year', 'date'),
     ('title', 'title'),
+    ('updated', 'updated'),
     ('creators', 'creators'),
     ('pdf_file', ('formats', 'pdf')),
     ('epub_file', ('formats', 'epub'))
 )
 
+
 def adapt_data(data):
     """
     Adapt data from books API to OAI-PHM proposal.
 
-    It uses 'FIELD_MAP' (from/to tuples) to ignore don't needed fields and 
+    It uses 'FIELD_MAP' (from/to tuples) to ignore don't needed fields and
     adapt keys. If the 'to' element of 'FIELD_MAP' was a tuple, it uses the
     second value as a default value.
 
@@ -42,7 +44,10 @@ def adapt_data(data):
                 to, value = to
                 adapted.setdefault(to, []).append(value)
             else:
-                adapted[to] = data[_from]
+                if _from == 'updated':
+                    adapted[to] = data[_from][0:10]
+                else:
+                    adapted[to] = data[_from]
     return adapted
 
 

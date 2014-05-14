@@ -19,6 +19,7 @@ VERBS = {
 @view_config(route_name='oai_pmh', renderer='oai')
 def oai_pmh(request):
     request_verb = request.params.get('verb')
+
     try:
         OaiVerb, need_books = VERBS[request_verb]
     except KeyError:
@@ -28,6 +29,10 @@ def oai_pmh(request):
     request_kwargs = request.params.copy()
     base_url = request.url.split('?')[0]
     params = {'request_kwargs': request_kwargs, 'base_url': base_url}
+
+    if not need_books and request_verb == 'Identify':
+        params['last_book'] = filter_last_book(request.db)
+
     if need_books:
         try:
             params['books'] = filter_books(request_kwargs, request.db, request.registry.settings)
@@ -46,6 +51,15 @@ def oai_pmh(request):
         return OaiVerb(**params)
     except oaipmh.BadArgumentError:
         return oaipmh.BadArgument(request_kwargs=request_kwargs, base_url=base_url)
+
+
+def filter_last_book(db):
+    last_book = db.books.find().sort('updated', 1)[0]
+
+    if len(last_book) == 0:
+        raise oaipmh.NoRecordsMatchError
+
+    return last_book
 
 
 def filter_books(request_kwargs, db, settings):
@@ -71,12 +85,12 @@ def filter_books(request_kwargs, db, settings):
     if 'from' in request_kwargs:
         _from = request_kwargs['from']
         _from = datetime.strptime(_from, '%Y-%m-%d')
-        search['datestamp'] = {'$gte': _from}
+        search['updated'] = {'$gte': _from}
 
     if 'until' in request_kwargs:
         until = request_kwargs['until']
         until = datetime.strptime(until, '%Y-%m-%d')
-        search.setdefault('datestamp', {})['$lte'] = until
+        search.setdefault('updated', {})['$lte'] = until
 
     if 'resumptionToken' in request_kwargs:
         try:
@@ -86,7 +100,7 @@ def filter_books(request_kwargs, db, settings):
 
         start = items_per_page * resumptionToken
 
-    books = db.books.find(search).sort('datestamp')[start: start + items_per_page]
+    books = db.books.find(search).sort('updated')[start: start + items_per_page]
     count = books.count()
 
     if not count:

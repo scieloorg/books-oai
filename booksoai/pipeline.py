@@ -71,8 +71,7 @@ class IdentifyNodePipe(plumber.Pipe):
         sub.text = data.get('adminEmail')
 
         sub = etree.SubElement(node, 'earliestDatestamp')
-        datetime = data.get('earliestDatestamp')
-        sub.text = str(datetime.date())
+        sub.text = data.get('earliestDatestamp')
 
         sub = etree.SubElement(node, 'deletedRecord')
         sub.text = data.get('deletedRecord')
@@ -121,7 +120,7 @@ class HeaderPipe(plumber.Pipe):
 
         datestamp = etree.SubElement(header, 'datestamp')
         date = data.get('datestamp')
-        datestamp.text = date.strftime('%Y-%m-%d')
+        datestamp.text = data.get('updated')
 
         set_spec = etree.SubElement(header, 'setSpec')
         set_spec.text = slugfy(data.get('publisher', ''))
