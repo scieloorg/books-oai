@@ -79,12 +79,16 @@ def filter_books(request_kwargs, db, settings):
         search.setdefault('datestamp', {})['$lte'] = until
 
     if 'resumptionToken' in request_kwargs:
-        resumptionToken = int(request_kwargs['resumptionToken'])
+        try:
+            resumptionToken = int(request_kwargs['resumptionToken'])
+        except ValueError:
+            raise oaipmh.BadResumptionTokenError
+
         start = items_per_page * resumptionToken
 
     books = db.books.find(search).sort('datestamp')[start: start + items_per_page]
     count = books.count()
-    
+
     if not count:
         raise oaipmh.NoRecordsMatchError
 
