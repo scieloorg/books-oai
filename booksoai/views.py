@@ -84,12 +84,10 @@ def filter_books(request_kwargs, db, settings):
 
     if 'from' in request_kwargs:
         _from = request_kwargs['from']
-        _from = datetime.strptime(_from, '%Y-%m-%d')
         search['updated'] = {'$gte': _from}
 
     if 'until' in request_kwargs:
         until = request_kwargs['until']
-        until = datetime.strptime(until, '%Y-%m-%d')
         search.setdefault('updated', {})['$lte'] = until
 
     if 'resumptionToken' in request_kwargs:
