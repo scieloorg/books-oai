@@ -35,7 +35,7 @@ def oai_pmh(request):
 
     if need_books:
         try:
-            params['books'] = filter_books(request_kwargs, request.db, request.registry.settings)
+            params['books'] = filter_books(request_kwargs, request.db, request.registry.settings, base_url)
         except oaipmh.CannotDisseminateFormatError:
             OaiVerb = oaipmh.CannotDisseminateFormat
         except oaipmh.IDDoesNotExistError:
@@ -44,6 +44,8 @@ def oai_pmh(request):
             OaiVerb = oaipmh.NoRecordsMatch
         except oaipmh.BadResumptionTokenError:
             OaiVerb = oaipmh.BadResumptionToken
+        except oaipmh.BadArgumentError:
+            OaiVerb = oaipmh.BadArgument
         except ValueError:
             OaiVerb = oaipmh.BadArgument
 
@@ -62,7 +64,7 @@ def filter_last_book(db):
     return last_book
 
 
-def filter_books(request_kwargs, db, settings):
+def filter_books(request_kwargs, db, settings, base_url):
     start = 0
     search = {}
     resumptionToken = 0
@@ -84,11 +86,23 @@ def filter_books(request_kwargs, db, settings):
 
     if 'from' in request_kwargs:
         _from = request_kwargs['from']
-        search['updated'] = {'$gte': _from}
+
+        try:
+            _from = datetime.strptime(_from, '%Y-%m-%d')
+        except ValueError:
+            raise oaipmh.BadArgumentError
+
+        search['updated'] = {'$gte': _from.date().isoformat()}
 
     if 'until' in request_kwargs:
         until = request_kwargs['until']
-        search.setdefault('updated', {})['$lte'] = until
+
+        try:
+            until = datetime.strptime(until, '%Y-%m-%d')
+        except ValueError:
+            raise oaipmh.BadArgumentError
+
+        search.setdefault('updated', {})['$lte'] = until.date().isoformat()
 
     if 'resumptionToken' in request_kwargs:
         try:
