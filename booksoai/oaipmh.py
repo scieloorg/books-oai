@@ -39,7 +39,7 @@ class IdentifyVerb(object):
     data = {
         'repositoryName': 'SciELO Books',
         'protocolVersion': '2.0',
-        'adminEmail': 'tecnologia@scielo.org',
+        'adminEmail': 'scielo.books@scielo.org',
         'deletedRecord': 'persistent',
         'granularity': 'YYYY-MM-DD'
     }
