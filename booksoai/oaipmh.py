@@ -105,14 +105,16 @@ class ListMetadataFormatsVerb(object):
 
 class ListIdentifiersVerb(object):
 
-    required_args = set(('metadataPrefix',))
     allowed_args = set(('from', 'until', 'set', 'resumptionToken', 'metadataPrefix', 'verb'))
 
     def __init__(self, books, request_kwargs, base_url):
         request_set = set(request_kwargs)
         diff = request_set - self.allowed_args
 
-        if diff or not self.required_args.issubset(request_set):
+        if not 'resumptionToken' in request_set and not 'metadataPrefix' in request_set:
+            raise BadArgumentError()
+
+        if diff:
             raise BadArgumentError()
 
         self.data = {
@@ -195,14 +197,16 @@ class GetRecordVerb(object):
 
 class ListRecordsVerb(object):
 
-    required_args = set(('metadataPrefix',))
     allowed_args = set(('from', 'until', 'set', 'resumptionToken', 'metadataPrefix', 'verb'))
 
     def __init__(self, books, request_kwargs, base_url):
         request_set = set(request_kwargs)
         diff = request_set - self.allowed_args
 
-        if diff or not self.required_args.issubset(request_set):
+        if not 'resumptionToken' in request_set and not 'metadataPrefix' in request_set:
+            raise BadArgumentError()
+
+        if diff:
             raise BadArgumentError()
 
         self.data = {

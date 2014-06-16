@@ -68,7 +68,7 @@ def filter_books(request_kwargs, db, settings, base_url):
     start = 0
     search = {}
     resumptionToken = 0
-    metadata_prefix = request_kwargs.get('metadataPrefix')
+    metadata_prefix = request_kwargs.get('metadataPrefix', 'oai_dc')
     items_per_page = int(settings.get('items_per_page', 100))
 
     if metadata_prefix and metadata_prefix != u'oai_dc':
