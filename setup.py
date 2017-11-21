@@ -7,15 +7,15 @@ README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
-    'pyramid',
-    'pyramid_debugtoolbar',
-    'waitress',
-    'pymongo',
-    'requests',
-    'mock',
-    'plumber',
-    'lxml',
-    'simpleslug'
+    'pyramid >= 1.5',
+    'pyramid_debugtoolbar >= 2.0.2',
+    'waitress >= 0.8.8',
+    'pymongo >= 2.7',
+    'requests >= 2.2.1',
+    'mock >= 1.0.1',
+    'picles.plumber >= 0.11',
+    'lxml >= 3.3.5',
+    'simpleslug >= 1.0'
     ]
 
 setup(name='booksoai',
@@ -27,6 +27,7 @@ setup(name='booksoai',
         "Framework :: Pyramid",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+        "Programming Language :: Python :: 2.7",
         ],
       author='',
       author_email='',
@@ -35,8 +36,6 @@ setup(name='booksoai',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      dependency_links=['http://github.com/scieloorg/plumber/tarball/master#egg=plumber',
-                        'http://github.com/picleslivre/simpleslug/tarball/master#egg=simpleslug'],
       install_requires=requires,
       tests_require=requires,
       test_suite="booksoai.tests",

@@ -69,7 +69,7 @@ def filter_books(request_kwargs, db, settings, base_url):
     search = {}
     resumptionToken = 0
     metadata_prefix = request_kwargs.get('metadataPrefix', 'oai_dc')
-    items_per_page = int(settings.get('items_per_page', 100))
+    items_per_page = settings['items_per_page']
 
     if metadata_prefix and metadata_prefix != u'oai_dc':
         raise oaipmh.CannotDisseminateFormatError
