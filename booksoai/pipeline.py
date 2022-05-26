@@ -219,12 +219,6 @@ class MetadataPipe(plumber.Pipe):
         title = etree.SubElement(oai_rec, '{%s}title' % self.dc)
         title.text = data.get('title')
 
-        creator = etree.SubElement(oai_rec, '{%s}creator' % self.dc)
-        try:
-            creator.text = data.get('creators').get('organizer')[0][0]
-        except TypeError:
-            oai_rec.remove(creator)
-            logger.info("Can't get organizer for id %s" % data.get('identifier'))
 
         contributor = etree.SubElement(oai_rec, '{%s}contributor' % self.dc)
         try:
