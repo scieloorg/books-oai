@@ -222,6 +222,10 @@ class MetadataPipe(plumber.Pipe):
         for author_role in ['individual_author', 'corporate_author', 'organizer', 'coordinator']:
             for ar in data.get('creators', {}).get(author_role, []):
                 self._append_node(oai_rec, '{%s}creator' % self.dc, ar[0])
+            
+        for contributor_role in ['editor', 'collaborator', 'translator']:
+            for cr in data.get('creators', {}).get(contributor_role, []):
+                self._append_node(oai_rec, '{%s}contributor' % self.dc, cr[0])
 
         description = etree.SubElement(oai_rec, '{%s}description' % self.dc)
         description.text = data.get('description')
