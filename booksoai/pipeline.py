@@ -203,6 +203,10 @@ class MetadataPipe(plumber.Pipe):
     schemaLocation += " http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
     attrib = {"{%s}schemaLocation" % xsi: schemaLocation}
 
+    def _append_node(self, root, node_name, node_text):
+        node = etree.SubElement(root, node_name)
+        node.text = node_text
+
     @precondition(deleted_precond)
     def transform(self, item):
         xml, data = item
