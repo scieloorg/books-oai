@@ -220,13 +220,6 @@ class MetadataPipe(plumber.Pipe):
         title.text = data.get('title')
 
 
-        contributor = etree.SubElement(oai_rec, '{%s}contributor' % self.dc)
-        try:
-            contributor.text = data.get('creators').get('collaborator')[0][0]
-        except TypeError:
-            oai_rec.remove(contributor)
-            logger.info("Can't get collaborator for id %s" % data.get('identifier'))
-
         description = etree.SubElement(oai_rec, '{%s}description' % self.dc)
         description.text = data.get('description')
 
