@@ -203,6 +203,10 @@ class MetadataPipe(plumber.Pipe):
     schemaLocation += " http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
     attrib = {"{%s}schemaLocation" % xsi: schemaLocation}
 
+    def _append_node(self, root, node_name, node_text):
+        node = etree.SubElement(root, node_name)
+        node.text = node_text
+
     @precondition(deleted_precond)
     def transform(self, item):
         xml, data = item
@@ -215,19 +219,13 @@ class MetadataPipe(plumber.Pipe):
         title = etree.SubElement(oai_rec, '{%s}title' % self.dc)
         title.text = data.get('title')
 
-        creator = etree.SubElement(oai_rec, '{%s}creator' % self.dc)
-        try:
-            creator.text = data.get('creators').get('organizer')[0][0]
-        except TypeError:
-            oai_rec.remove(creator)
-            logger.info("Can't get organizer for id %s" % data.get('identifier'))
-
-        contributor = etree.SubElement(oai_rec, '{%s}contributor' % self.dc)
-        try:
-            contributor.text = data.get('creators').get('collaborator')[0][0]
-        except TypeError:
-            oai_rec.remove(contributor)
-            logger.info("Can't get collaborator for id %s" % data.get('identifier'))
+        for author_role in ['individual_author', 'corporate_author', 'organizer', 'coordinator']:
+            for ar in data.get('creators', {}).get(author_role, []):
+                self._append_node(oai_rec, '{%s}creator' % self.dc, ar[0])
+            
+        for contributor_role in ['editor', 'collaborator', 'translator']:
+            for cr in data.get('creators', {}).get(contributor_role, []):
+                self._append_node(oai_rec, '{%s}contributor' % self.dc, cr[0])
 
         description = etree.SubElement(oai_rec, '{%s}description' % self.dc)
         description.text = data.get('description')

@@ -15,6 +15,8 @@ COPY dist/* /tmp/pypa/
 
 RUN apt-get update && apt-get install python-lxml
 
+RUN pip install --upgrade pip
+
 RUN pip --no-cache-dir install -r /app/requirements.txt && \
     pip --no-cache-dir install -f file:///tmp/pypa -U booksoai
 
