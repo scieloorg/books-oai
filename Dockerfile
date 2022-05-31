@@ -11,7 +11,7 @@ ENV IMAGE_VCS_REF ${VCS_REF}
 ENV IMAGE_WEBAPP_VERSION ${WEBAPP_VERSION}
 
 COPY requirements.txt production.ini /app/
-COPY dist/* /tmp/pypa/
+COPY dist /tmp/pypa/
 
 RUN apt-get update && apt-get install python-lxml
 
