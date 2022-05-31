@@ -1,10 +1,8 @@
 from __future__ import unicode_literals
 
-import plumber
-
-from lxml import etree
 from datetime import datetime
 
+import plumber
 import pipeline
 
 
