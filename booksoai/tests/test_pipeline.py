@@ -551,7 +551,7 @@ class TestMetadataPipe(unittest.TestCase):
 
         self.assertEqual(etree.tostring(xml), xml_str)
 
-    def test_metadata_pipe_add_record_as_dublin_core_with_editor_contributor(self):
+    def test_metadata_pipe_add_record_as_dublin_core_with_editor_creator(self):
         data = {
             'title': 'title',
             'creators': {
@@ -579,7 +579,7 @@ class TestMetadataPipe(unittest.TestCase):
         xml_str += ' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/'
         xml_str += ' http://www.openarchives.org/OAI/2.0/oai_dc.xsd">'
         xml_str += '<dc:title>title</dc:title>'
-        xml_str += '<dc:contributor>editor1</dc:contributor>'
+        xml_str += '<dc:creator>editor1</dc:creator>'
         xml_str += '<dc:description>description</dc:description>'
         xml_str += '<dc:publisher>publisher</dc:publisher>'
         xml_str += '<dc:date>2014</dc:date>'
@@ -648,10 +648,10 @@ class TestMetadataPipe(unittest.TestCase):
                     ['translator1', None], 
                     ['translator2', None]
                 ],
-                'editor': [
-                    ['editor1', None], 
-                    ['editor2', None], 
-                    ['editor3', None]
+                'collaborator': [
+                    ['collaborator1', None], 
+                    ['collaborator2', None], 
+                    ['collaborator3', None]
                 ],
             },
             'description': 'description',
@@ -674,9 +674,9 @@ class TestMetadataPipe(unittest.TestCase):
         xml_str += ' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/'
         xml_str += ' http://www.openarchives.org/OAI/2.0/oai_dc.xsd">'
         xml_str += '<dc:title>title</dc:title>'
-        xml_str += '<dc:contributor>editor1</dc:contributor>'
-        xml_str += '<dc:contributor>editor2</dc:contributor>'
-        xml_str += '<dc:contributor>editor3</dc:contributor>'
+        xml_str += '<dc:contributor>collaborator1</dc:contributor>'
+        xml_str += '<dc:contributor>collaborator2</dc:contributor>'
+        xml_str += '<dc:contributor>collaborator3</dc:contributor>'
         xml_str += '<dc:contributor>translator1</dc:contributor>'
         xml_str += '<dc:contributor>translator2</dc:contributor>'
         xml_str += '<dc:description>description</dc:description>'
@@ -719,6 +719,10 @@ class TestMetadataPipe(unittest.TestCase):
                     ['editor2', None], 
                     ['editor3', None]
                 ],
+                'collaborator': [
+                    ['collaborator1', None], 
+                    ['collaborator2', None], 
+                ],
                 'coordinator': [
                     ['coordinator1', None], 
                     ['coordinator2', None], 
@@ -753,9 +757,11 @@ class TestMetadataPipe(unittest.TestCase):
         xml_str += '<dc:creator>organizer2</dc:creator>'
         xml_str += '<dc:creator>coordinator1</dc:creator>'
         xml_str += '<dc:creator>coordinator2</dc:creator>'
-        xml_str += '<dc:contributor>editor1</dc:contributor>'
-        xml_str += '<dc:contributor>editor2</dc:contributor>'
-        xml_str += '<dc:contributor>editor3</dc:contributor>'
+        xml_str += '<dc:creator>editor1</dc:creator>'
+        xml_str += '<dc:creator>editor2</dc:creator>'
+        xml_str += '<dc:creator>editor3</dc:creator>'
+        xml_str += '<dc:contributor>collaborator1</dc:contributor>'
+        xml_str += '<dc:contributor>collaborator2</dc:contributor>'
         xml_str += '<dc:contributor>translator1</dc:contributor>'
         xml_str += '<dc:contributor>translator2</dc:contributor>'
         xml_str += '<dc:description>description</dc:description>'
