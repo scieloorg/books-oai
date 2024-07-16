@@ -8,3 +8,4 @@ pyramid-mako==1.0.2
 requests==2.2.1
 picles.plumber==0.11
 -e git+http://github.com/picleslivre/simpleslug#egg=simpleslug
+setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
