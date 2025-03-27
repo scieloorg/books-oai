@@ -1,4 +1,4 @@
-gunicorn==18.0
+gunicorn==23.0.0
 lxml==3.3.5
 mock==1.0.1
 pymongo==2.7
